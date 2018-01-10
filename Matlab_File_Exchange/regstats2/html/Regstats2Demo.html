@@ -1,0 +1,209 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML is auto-generated from an M-file.
+To make changes, update the M-file and republish this document.
+      --><title>REGSTATS2: what's new</title><meta name="generator" content="MATLAB 7.9"><meta name="date" content="2010-02-15"><meta name="m-file" content="Regstats2Demo"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h1>REGSTATS2: what's new</h1><!--introduction--><p>This is an enhanced version of the <i>regstats</i> function (statistics toolbox). Here are implemented several ways to estimate robust standard errors (<i>se</i>) for the coefficients\n. Also, it allows to supply a matrix of responses, where each columns is considered as a distinct series, instead of just a vector. The engine will loop through each column returning a set of results for each regression. Another additional feature is the option "onlydata" for the argument MODEL. You can supply DATA as it is without adding the constant or the interaction terms.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">ROBUST SE METHODS</a></li><li><a href="#3">REFERENCES</a></li><li><a href="#4">OTHER FIELDS</a></li><li><a href="#5">EXAMPLE</a></li><li><a href="#10">ONLYDATA</a></li><li><a href="#12">TODO</a></li></ul></div><h2>ROBUST SE METHODS<a name="1"></a></h2><p>The methods implemented to estimate robust <i>se</i> are the following:</p><div><ul><li><b>HC0</b> - White robust t statistics (Eicker,1963,1967; Huber,1967; White,1980)</li><li><b>HC1</b> - With dfe correction (Hinkley,1977)</li><li><b>HC2</b> - White weighted by 1-h (MacKinnon &amp; White,1985)</li><li><b>HC3</b> - White weighted by (1-h)^2 (Davidson &amp; MacKinnon,1993)</li><li><b>HC4</b> - White weighted by (1-h)^delta (Cribari &amp; Neto,2004)</li><li><b>HAC</b> - Newey West t statistics (Newey &amp; West,1987)</li></ul></div><h2>REFERENCES<a name="3"></a></h2><p>The main references I used to implement the estimation methods are from:</p><div><ul><li>Achim Z.(2004). Econometric Computing with HC and HAC Covariance Matrix Estimators. <i>Journal of Statistical Software, XI, 10th issue</i>. <a href="http://www.jstatsoft.org/v11/i10">http://www.jstatsoft.org/v11/i10</a></li><li>Econometrics Toolbox: by James P. LeSage. <a href="http://www.spatial-econometrics.com/">http://www.spatial-econometrics.com/</a></li></ul></div><h2>OTHER FIELDS<a name="4"></a></h2><div><ul><li><b>empty</b>   - true if the series is all NaNs</li><li><b>rankdef</b> - true if the series is rank deficient</li></ul></div><h2>EXAMPLE<a name="5"></a></h2><p>Lets test regstats2 against regstats on a single series of the responses</p><pre class="codeinput">warning <span class="string">off</span> <span class="string">stats:pvaluedw:BadMethod</span>      <span class="comment">% set the warnings off</span>
+warning <span class="string">off</span> <span class="string">MATLAB:nearlySingularMatrix</span>   <span class="comment">% set the warnings off</span>
+load <span class="string">Demodata</span>
+tic; Stats1 = regstats(Demodata.resp(:,1),Demodata.X,<span class="string">'linear'</span>,<span class="string">'all'</span>);
+fprintf(<span class="string">'Elapsed time: %f s\n'</span>, toc);
+
+tic; Stats2 = regstats2(Demodata.resp(:,1),Demodata.X,<span class="string">'linear'</span>,<span class="string">'all'</span>);
+fprintf(<span class="string">'Elapsed time: %f s\n'</span>, toc);
+</pre><pre class="codeoutput">Elapsed time: 1.389385 s
+Elapsed time: 1.682561 s
+</pre><p><img vspace="5" hspace="5" src="strCmp.png" alt=""> </p><p>Lets test regstats2 on several series of the responses (without dwstat which is the heaviest routine)</p><pre class="codeinput">whichstats = {<span class="string">'Q'</span>,<span class="string">'R'</span>,<span class="string">'beta'</span>,<span class="string">'covb'</span>,<span class="string">'yhat'</span>,<span class="string">'r'</span>,<span class="string">'mse'</span>,<span class="string">'rsquare'</span>,<span class="string">'adjrsquare'</span>, <span class="keyword">...</span>
+              <span class="string">'leverage'</span>,<span class="string">'hatmat'</span>,<span class="string">'s2_i'</span>,<span class="string">'beta_i'</span>,<span class="string">'standres'</span>,<span class="string">'studres'</span>, <span class="keyword">...</span>
+              <span class="string">'dfbetas'</span>,<span class="string">'dffit'</span>,<span class="string">'dffits'</span>,<span class="string">'covratio'</span>,<span class="string">'cookd'</span>,<span class="string">'tstat'</span>,<span class="string">'fstat'</span>,<span class="keyword">...</span>
+              <span class="string">'hc0'</span>,<span class="string">'hc1'</span>,<span class="string">'hc2'</span>,<span class="string">'hc3'</span>,<span class="string">'hc4'</span>,<span class="string">'hac'</span>,<span class="string">'empty'</span>,<span class="string">'rankdef'</span>};
+tic;Stats3 = regstats2(Demodata.resp(:,1:5),Demodata.X,<span class="string">'linear'</span>,whichstats);
+fprintf(<span class="string">'Elapsed time: %f s\n\n'</span>, toc);
+whos <span class="string">Stats3</span>; disp(fieldnames(Stats3))
+</pre><pre class="codeoutput">Elapsed time: 0.289656 s
+
+  Name        Size               Bytes  Class     Attributes
+
+  Stats3      1x5             11409450  struct              
+
+    'Q'
+    'R'
+    'beta'
+    'covb'
+    'yhat'
+    'r'
+    'mse'
+    'rsquare'
+    'adjrsquare'
+    'leverage'
+    'hatmat'
+    's2_i'
+    'beta_i'
+    'standres'
+    'studres'
+    'dfbetas'
+    'dffit'
+    'dffits'
+    'covratio'
+    'cookd'
+    'tstat'
+    'fstat'
+    'hc0'
+    'hc1'
+    'hc2'
+    'hc3'
+    'hc4'
+    'hac'
+    'empty'
+    'rankdef'
+
+</pre><p>The GUI now looks like:</p><pre class="codeinput"> <span class="comment">% regstats2(Demodata.resp(:,1:5),Demodata.X,'linear');</span>
+</pre><p><img vspace="5" hspace="5" src="selectStats.png" alt=""> </p><h2>ONLYDATA<a name="10"></a></h2><p>You can regress the responses on the predictors without adding any constant or interaction terms:</p><pre class="codeinput">Stats4 = regstats2(Demodata.resp(:,1:5),Demodata.X,<span class="string">'onlydata'</span>,{<span class="string">'beta'</span>,<span class="string">'tstat'</span>});
+</pre><p>A <b>warning</b> is issued if the F statistic or the R square are called under the 'onlydata' option:</p><pre class="codeinput">regstats2(Demodata.resp(:,1:5),Demodata.X,<span class="string">'onlydata'</span>,{<span class="string">'fstat'</span>,<span class="string">'rsquare'</span>});
+</pre><pre class="codeoutput">Warning: R-square and the F statistic are not well-defined under "onlydata" MODEL
+unless DATA contains a column of ones (intercept), in which case is
+recommended to use the "linear" MODEL. 
+</pre><h2>TODO<a name="12"></a></h2><div><ol><li>Add heteroskedasticity test. Re-adapt TestHet from the FEX.</li><li>Add 'select all' and 'deselect all' check boxes in the GUI.</li><li>Reorganize exportGUI (add scrollbar or switch pages...)</li></ol></div><p class="footer"><br>
+      Published with MATLAB&reg; 7.9<br></p></div><!--
+##### SOURCE BEGIN #####
+%% REGSTATS2: what's new
+% This is an enhanced version of the _regstats_ function (statistics toolbox).
+% Here are implemented several ways to estimate robust standard errors (_se_) for 
+% the coefficients\n.
+% Also, it allows to supply a matrix of responses, where each columns is considered as a
+% distinct series, instead of just a vector. The engine will loop through each column
+% returning a set of results for each regression.
+% Another additional feature is the option "onlydata" for the argument MODEL. You can 
+% supply DATA as it is without adding the constant or the interaction terms. 
+
+%% ROBUST SE METHODS
+% The methods implemented to estimate robust _se_ are the following:
+%%
+% * *HC0* - White robust t statistics (Eicker,1963,1967; Huber,1967; White,1980)
+% * *HC1* - With dfe correction (Hinkley,1977)
+% * *HC2* - White weighted by 1-h (MacKinnon & White,1985)
+% * *HC3* - White weighted by (1-h)^2 (Davidson & MacKinnon,1993)
+% * *HC4* - White weighted by (1-h)^delta (Cribari & Neto,2004)
+% * *HAC* - Newey West t statistics (Newey & West,1987)
+
+%% REFERENCES
+% The main references I used to implement the estimation methods are from:
+%
+% * Achim Z.(2004). Econometric Computing with HC and HAC Covariance Matrix Estimators. _Journal of Statistical Software, 
+% XI, 10th issue_. <http://www.jstatsoft.org/v11/i10>
+% * Econometrics Toolbox: by James P. LeSage. <http://www.spatial-econometrics.com/>
+%% OTHER FIELDS
+% * *empty*   - true if the series is all NaNs
+% * *rankdef* - true if the series is rank deficient
+%% EXAMPLE
+% Lets test regstats2 against regstats on a single series of the responses
+warning off stats:pvaluedw:BadMethod      % set the warnings off
+warning off MATLAB:nearlySingularMatrix   % set the warnings off
+load Demodata
+tic; Stats1 = regstats(Demodata.resp(:,1),Demodata.X,'linear','all'); 
+fprintf('Elapsed time: %f s\n', toc);
+
+tic; Stats2 = regstats2(Demodata.resp(:,1),Demodata.X,'linear','all');
+fprintf('Elapsed time: %f s\n', toc);
+%%
+% 
+% <<strCmp.png>>
+% 
+%%
+% Lets test regstats2 on several series of the responses (without dwstat which is the heaviest routine)
+whichstats = {'Q','R','beta','covb','yhat','r','mse','rsquare','adjrsquare', ...
+              'leverage','hatmat','s2_i','beta_i','standres','studres', ...
+              'dfbetas','dffit','dffits','covratio','cookd','tstat','fstat',...
+              'hc0','hc1','hc2','hc3','hc4','hac','empty','rankdef'};
+tic;Stats3 = regstats2(Demodata.resp(:,1:5),Demodata.X,'linear',whichstats);
+fprintf('Elapsed time: %f s\n\n', toc);
+whos Stats3; disp(fieldnames(Stats3))
+%% 
+% The GUI now looks like:
+ % regstats2(Demodata.resp(:,1:5),Demodata.X,'linear');
+%%
+%
+% <<selectStats.png>>
+%
+%% ONLYDATA
+% You can regress the responses on the predictors without adding any constant or
+% interaction terms:
+Stats4 = regstats2(Demodata.resp(:,1:5),Demodata.X,'onlydata',{'beta','tstat'});
+%%
+% A *warning* is issued if the F statistic or the R square are called under the 'onlydata'
+% option:
+regstats2(Demodata.resp(:,1:5),Demodata.X,'onlydata',{'fstat','rsquare'});
+
+%% TODO
+% 
+% # Add heteroskedasticity test. Re-adapt TestHet from the FEX.
+% # Add 'select all' and 'deselect all' check boxes in the GUI.
+% # Reorganize exportGUI (add scrollbar or switch pages...) 
+
+
+
+
+
+
+
+##### SOURCE END #####
+--></body></html>
