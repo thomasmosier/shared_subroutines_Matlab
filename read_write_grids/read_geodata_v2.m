@@ -300,12 +300,13 @@ elseif regexpbl(ext, 'asc')
            return
        end
     end
-    
-    %Set time variable:
-    sData.('attTime') = {'units', 'days since 1900-01-01'; ...
-        'calendar', 'gregorian'};
-    sData.time = days_since([1900,1,1], [sData.(varDate)(:,1:2), 15*ones([numel(sData.(varDate)(:,1)), 1])], 'gregorian');
-    
+
+    if isfield(sData, 'time')
+        %Set time variable:
+        sData.('attTime') = {'units', 'days since 1900-01-01'; ...
+            'calendar', 'gregorian'};
+        sData.time = days_since([1900,1,1], [sData.(varDate)(:,1:2), 15*ones([numel(sData.(varDate)(:,1)), 1])], 'gregorian');
+    end
 
     if regexpbl(pathData,'cru')
         sData.info = {'source','CRU'};
@@ -324,6 +325,22 @@ elseif regexpbl(ext, 'asc')
     end
     
    [sData.(varLat), sData.(varLon)] = ESRI_hdr2geo(hdrESRI, metaESRI);
+   
+   if all(~isnan([lonLd(:); latLd(:)]))
+        sMeta.crd = [min(lonLd), max(lonLd), max(latLd), min(latLd)];
+        [~, indLatLd] = NC_lat_use_v4(sData.(varLat), {'units','degrees_North'}, sMeta);
+        [~, indLonLd] = NC_lon_use_v4(sData.(varLon), {'units','degrees_East'}, sMeta);
+       
+        sData.(varLat) = sData.(varLat)(min(indLatLd):max(indLatLd));
+        sData.(varLon) = sData.(varLon)(min(indLonLd):max(indLonLd));
+        if ndims(sData.(varLd)) == 3
+            sData.(varLd) = sData.(varLd)( : , min(indLatLd):max(indLatLd), min(indLonLd):max(indLonLd));
+        elseif ndims(sData.(varLd)) == 2
+            sData.(varLd) = sData.(varLd)(min(indLatLd):max(indLatLd), min(indLonLd):max(indLonLd));
+        else
+            error('readGeodata:ascdims',['The number of dimensions in the loaded ascii file is ' num2str(ndims(sData.(varLd))) ', but either 2 or 3 are expected.']);
+        end
+   end
    
 else
     error('readGeodata:unknownType',['The following file is of an unknown type or format: ' pathData '.']);
