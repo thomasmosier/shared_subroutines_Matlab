@@ -21,6 +21,7 @@
 function sData = read_geodata(pathData, sMeta, varargin)
 
 
+warning('read_geodata:obsolete','This function is obsolete. Use read_geodata_v2 instead.')
 
 %Read NetCDF or ESRI ASCII geo-referenced data and write output
 %INPUT:

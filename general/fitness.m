@@ -37,9 +37,9 @@ if numel(size(mod)) == 2
        mod = mod'; 
     end
     
-    %Remove values based on nan's in observed vector:
-    mod(isnan(obs)) = [];
-    obs(isnan(obs)) = [];
+%     %Remove values based on nan's in observed vector:
+%     mod(isnan(obs)) = [];
+%     obs(isnan(obs)) = [];
 
     %If optional input, remove values based on nan's in modeled vector:
     if ~isempty(varargin(:)) && regexpbl(varargin{1},'rmMod')
@@ -106,20 +106,47 @@ for mm = 1 : numel(strEval(:))
         mod(indRem) = [];
         nFit(mm) = nanmean( abs(obs(:)).*abs((mod(:) - obs(:))./obs(:)));
     elseif regexpbl(strEval{mm}, 'mbe') %mass balance efficiency
-%         indRem = find(obs == 0);
-        indRem = [];
-        indRem = union(indRem, find(isnan(obs)));
-        indRem = union(indRem, find(isnan(mod)));
-        obs(indRem) = [];
-        mod(indRem) = [];
+        %The 'mbe' (mass balance efficiency) is a statistic of a similar
+        %form as the KGE (Kling Gupta Efficiency), adapted to assess model
+        %performance of gridded glacier mass balance modelling over a region
+        %The 'rTerm' assesses error in the spatial pattern (first using a smoothing filter)
+        %The 'bTerm' assesses error in the regional bias
+
+        %Apply Gaussian filter for calculating correlation
+        rad = 2;
+        sigma = rad;
+        obsGauss = Gaussian_filter(obs, rad, sigma);
+        obsGauss(isnan(obs)) = nan;
         
-        covVar = cov(obs,mod);
+        modGauss = Gaussian_filter(mod, rad, sigma);
+        modGauss(isnan(mod)) = nan;
+
+        %Remove nan values:
+        indRem = [];
+        indRem = union(indRem, find(isnan(obsGauss)));
+        indRem = union(indRem, find(isnan(modGauss)));
+        obsGauss(indRem) = [];
+        modGauss(indRem) = [];
+
+        covVar = cov(obsGauss,modGauss);
         if numel(covVar) > 1
-            %See definition of the KGE and linear correlation coefficient (can be decomposed into covariance and SD)
-            nFit(mm) = sqrt((covVar(2)/(nanstd(obs)*nanstd(mod))-1)^2 + (nanstd(mod)/nanstd(obs)-1)^2 + (nanmean(abs(mod))/nanmean(abs(obs))-1)^2);
-%             denom = nanmean(abs([nanmax(obs(:)), nanmin(obs(:))]));
-%             nFit(mm) = sqrt((covVar(2)/(nanstd(obs)*nanstd(mod))-1)^2 + (nanstd(mod)/nanstd(obs)-1)^2 + ((nanmean(mod) - nanmean(obs))/denom)^2);
+            rTerm = (covVar(2)/(nanstd(obsGauss)*nanstd(modGauss))-1)^2;
+%             rTerm = nanmean(abs(mod-obs))/nanstd(obs);
+%             R = (corrcoef(obs,mod) - 1)^2;
+%             [~, valMod] = e_cdf(mod, 'bins', 100);
+%             [~, valObs] = e_cdf(obs, 'bins', 100);
+%             
+%             sTerm = (nanmean(abs((valMod(2:end)-valObs(2:end)))./nanmean(valObs(2:end))))^2;
+%             
+%             sTerm = (nanmean(abs((valMod(2:end)-valObs(2:end))./valObs(2:end))))^2;
+% %             sTerm = (nanstd(mod)/nanstd(obs)-1)^2;
+        else
+            rTerm = nan;
         end
+        
+        bTerm = ((nanmean(mod(:))-nanmean(obs(:)))/nanstd(obs(:)))^2;
+        %See definition of the KGE and linear correlation coefficient (can be decomposed into covariance and SD)
+        nFit(mm) = sqrt(rTerm + bTerm);
     elseif regexpbl(strEval{mm},'NSE') || regexpbl(strEval{mm},{'nash','sutcliffe'},'and')%MINIMIZE USING NASH-SUTCLIFFE EFFICIENCY:
         if ndims(mod) == 3
             %Calculate the NSE score over time at each grid location, then average
@@ -144,6 +171,13 @@ for mm = 1 : numel(strEval(:))
 
             nFit(mm) = mean2d(nFitG);
         elseif numel(size(mod)) == 2
+            %Remove nan values:
+            indRem = [];
+            indRem = union(indRem, find(isnan(obs)));
+            indRem = union(indRem, find(isnan(mod)));
+            obs(indRem) = [];
+            mod(indRem) = [];
+            
             denomNse = nansum( (obs - nanmean(obs,2)*ones(1, numel(obs(1,:)))).^2, 2);
             nFit(mm) = nansum((obs - mod).^2, 2) ...
                 ./ denomNse;
@@ -191,6 +225,13 @@ for mm = 1 : numel(strEval(:))
 
             nFit(mm) = mean2d(nFitG);
         elseif numel(size(mod)) == 2
+            %Remove nan values:
+            indRem = [];
+            indRem = union(indRem, find(isnan(obs)));
+            indRem = union(indRem, find(isnan(mod)));
+            obs(indRem) = [];
+            mod(indRem) = [];
+        
             covVar = cov(obs,mod);
             if numel(covVar) > 1
                 rTerm = (covVar(2)/(nanstd(obs)*nanstd(mod))-1)^2;
