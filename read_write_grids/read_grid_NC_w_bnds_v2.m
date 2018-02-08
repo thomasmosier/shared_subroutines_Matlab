@@ -256,7 +256,7 @@ if ~isempty(varT)
         
         %Find time offset from the reference date:
         if regexpbl(tUnits, 'days since')
-            sData.date = days_2_date(sData.(varT), gcmRef, strCal);
+            sData.date = days_2_date_v2(sData.(varT), gcmRef, strCal);
         elseif regexpbl(tUnits, 'Ka BP') && regexpbl(strCal,'noleap')
             sData.date = time_kaBP_2_standard(sData.(varT),gcmRef,strCal);
         elseif regexpbl(tUnits, 'hours since')
@@ -264,7 +264,7 @@ if ~isempty(varT)
                 gcmRef = [gcmRef, 0];
             end
 
-            sData.date = days_2_date(sData.(varT)/24, gcmRef, strCal);
+            sData.date = days_2_date_v2(sData.(varT)/24, gcmRef, strCal);
         else
             warning('NC_time:unitsUnknown', ['The NetCDF file' char(39) ...
                 's time units are' tUnits '. This has not been programmed for. '...
