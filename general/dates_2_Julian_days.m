@@ -1,4 +1,4 @@
-function [dayJ, datesOut] = dates_cal_2_Julian(datesIn, tRes)
+function [dayJ, datesOut] = dates_2_Julian_days(datesIn, tRes)
 
 %Calculate Julian dates:
 if regexpbl(tRes,{'day','daily'}) %Calculate for day:
@@ -6,9 +6,9 @@ if regexpbl(tRes,{'day','daily'}) %Calculate for day:
         dayJ = Julian_day(datesIn,'ofyear');
         datesOut = datesIn;
     else
-        error('toa_rad_DeWalle:dateNumel',['The date vector has ' num2str(numel(datesIn(1,:))) ' elements but 3 are needed.']);
+        error('dates_cal_2_Julian:dateNumel',['The date vector has ' num2str(numel(datesIn(1,:))) ' elements but 3 are needed.']);
     end
-elseif regexpbl(tRes,'month') %if month time-step, calculate PET for each day and average to monthly value
+elseif regexpbl(tRes,'month') %if month time-step, calculate for each day and average to monthly value
     dayJ = nan(31*numel(datesIn(:,1)));
     datesOut = nan([31*numel(datesIn(:,1)),3]);
     cntr = 0;
@@ -22,5 +22,5 @@ elseif regexpbl(tRes,'month') %if month time-step, calculate PET for each day an
     dayJ = dayJ(1:cntr);
     datesOut = datesOut(1:cntr,:);
 else
-    error('toa_rad_DeWalle:tUnit',['Current time units are ' tRes ' but days or months are required.  Program for this.'])
+    error('dates_cal_2_Julian:tUnit',['Current time units are ' tRes ' but days or months are required.  Program for this.'])
 end
