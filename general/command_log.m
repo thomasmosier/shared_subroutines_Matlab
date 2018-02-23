@@ -18,7 +18,7 @@
 % along with the Downscaling Package.  If not, see 
 % <http://www.gnu.org/licenses/>.
 
-function fileDiary = downscale_diary(dirOutput,fileAppend)
+function fileDiary = command_log(dirOutput,fileAppend)
 
 
 
