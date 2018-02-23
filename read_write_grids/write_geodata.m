@@ -20,7 +20,7 @@
 
 function write_geodata(pathData,sData,sMeta,prec,wrtTyp,varargin)
 
-
+warning('writeGeodata:obsolete','This function is obsolete. Use write_geodata_v2 instead')
 
 %Input: %Designed to work with function 'read_geodata.m'
 %'path' = full path for output file
