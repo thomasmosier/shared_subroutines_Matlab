@@ -44,7 +44,7 @@ for ii = 1 : length(filesAll(:))
             cal = 'gregorian';
         end
 
-        dateVecTemp = days_2_date(sDataTemp.time, gcmRefDateTemp, calTemp);
+        dateVecTemp = days_2_date_v2(sDataTemp.time, gcmRefDateTemp, calTemp);
         sDataTemp.time = days_since(gcmRefDate, dateVecTemp, cal);
 
         %Find all fields to append:
