@@ -76,7 +76,7 @@ if  ~isempty(regexpi(wrtTyp,'csv'))
             if ~isempty(regexpi(tUnits,'days since'))
                 cal =  NC_cal(sData.atttime);
 
-                vecTCurr = days_2_date(sData.time, dateRef, cal);
+                vecTCurr = days_2_date_v2(sData.time, dateRef, cal);
             else
                 disp(['The GCM' char(39) 's time units are' tUnits '.']);
                 error('NC_time:refUnknown',['A case has not been '...
