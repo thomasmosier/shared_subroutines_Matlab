@@ -109,12 +109,12 @@ if regexpbl(method, {'area','wgt'}, 'and')
             nTime = numel(squeeze(s1.(var)(:,1,1)));
             varTemp = nan([nTime, nLat, nLon]);
             for ii = 1 : nTime
-                varTemp(ii,:,:) = area_int_2D_v2(s1.(varLon),s1.(varLat),squeeze(s1.(var)(ii,:,:)),s2.(varLon),s2.(varLat), type);
+                varTemp(ii,:,:) = geodata_area_wgt(s1.(varLon),s1.(varLat),squeeze(s1.(var)(ii,:,:)),s2.(varLon),s2.(varLat), type);
             end
             clear ii
             s1.(var) = varTemp;
         else
-            s1.(var) = area_int_2D_v2(s1.(varLon),s1.(varLat),s1.(var),s2.(varLon),s2.(varLat), type);
+            s1.(var) = geodata_area_wgt(s1.(varLon),s1.(varLat),s1.(var),s2.(varLon),s2.(varLat), type);
         end
         
         s1.(varLat) = s2.(varLat);
@@ -127,13 +127,13 @@ if regexpbl(method, {'area','wgt'}, 'and')
             nTime = numel(squeeze(s2.(var)(:,1,1)));
             varTemp = nan([nTime, nLat, nLon]);
             for ii = 1 : nTime
-                varTemp(ii,:,:) = area_int_2D_v2(s2.(varLon),s2.(varLat),squeeze(s2.(var)(ii,:,:)),s1.(varLon),s1.(varLat), type);
+                varTemp(ii,:,:) = geodata_area_wgt(s2.(varLon),s2.(varLat),squeeze(s2.(var)(ii,:,:)),s1.(varLon),s1.(varLat), type);
             end
             clear ii
             
             s2.(var) = varTemp;
         else
-            s2.(var) = area_int_2D_v2(s2.(varLon),s2.(varLat),s2.(var),s1.(varLon),s1.(varLat), type);
+            s2.(var) = geodata_area_wgt(s2.(varLon),s2.(varLat),s2.(var),s1.(varLon),s1.(varLat), type);
         end
         
         s2.(varLat) = s1.(varLat);

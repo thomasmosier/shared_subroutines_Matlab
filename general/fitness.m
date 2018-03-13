@@ -18,11 +18,21 @@
 % along with the Downscaling Package.  If not, see 
 % <http://www.gnu.org/licenses/>.
 
-function nFit = fitness(obs, mod, strEval, varargin)
+function statOut = fitness(obs, mod, strEval, varargin)
 
 
 %Score for fitness metric evaluation that returns 0. 
 nanPen = 10^3;
+
+% if isempty(obs) || isempty(mod)
+%     if iscell(strEval)
+%         statsOut = nan(size(strEval(:)));
+%     else
+%         statsOut = nan;
+%     end
+% 
+%     return
+% end
 
 obs = squeeze(obs);
 mod = squeeze(mod);
@@ -53,7 +63,8 @@ if ischar(strEval)
 end
 
 nFit = numel(strEval(:));
-for mm = 1 : numel(strEval(:))
+statOut = nan(nFit, 1);
+for mm = 1 : nFit
     
 %     %Can have two evaluation methods, one = MODIS (only for 3D arrays) and
 %     %second for all other cases:
@@ -69,7 +80,7 @@ for mm = 1 : numel(strEval(:))
     if ~isequal(size(obs),size(mod))
        warning('fitness:unequalSize',['The model output and observations '...
            'to be compared have different sizes and are therefore not being compared.']); 
-       nFit(mm) = nan;
+       statOut(mm) = nan;
        return
     end
 
@@ -79,13 +90,13 @@ for mm = 1 : numel(strEval(:))
     % end
 
     if regexpbl(strEval{mm},'bias') %BIAS:
-        nFit(mm) = nanmean(obs(:) - mod(:));
+        statOut(mm) = nanmean(obs(:) - mod(:));
     elseif regexpbl(strEval{mm},'RMSE') %ROOT MEAN SQUARE ERROR:
-        nFit(mm) = sqrt(nanmean((mod(:) - obs(:)).^2));
+        statOut(mm) = sqrt(nanmean((mod(:) - obs(:)).^2));
     elseif regexpbl(strEval{mm},'abs') %MINIMIZE ABSOLUTE DIFFERENCE:
-        nFit(mm) = sqrt(nansum((obs(:) - mod(:)).^2 , 2));
+        statOut(mm) = sqrt(nansum((obs(:) - mod(:)).^2 , 2));
     elseif regexpbl(strEval{mm},{'MAE','mean absolute error'})
-        nFit(mm) = nanmean( abs(mod(:) - obs(:)));
+        statOut(mm) = nanmean( abs(mod(:) - obs(:)));
     elseif regexpbl(strEval{mm},'mape') && ~regexpbl(strEval{mm},'wmape') %MINIMIZE MEAN ABSOLUTE PERCENT ERROR:
         indRem = find(obs == 0);
         indRem = union(indRem, find(isnan(obs)));
@@ -94,9 +105,9 @@ for mm = 1 : numel(strEval(:))
         mod(indRem) = [];
 
         if regexpbl(strEval{mm},'agg')
-            nFit(mm) = abs(nanmean(mod(:) - obs(:)))./abs(nanmean(obs(:)));
+            statOut(mm) = abs(nanmean(mod(:) - obs(:)))./abs(nanmean(obs(:)));
         else
-            nFit(mm) = nanmean( abs((mod(:) - obs(:))./abs(obs(:))));
+            statOut(mm) = nanmean( abs((mod(:) - obs(:))./abs(obs(:))));
         end
     elseif regexpbl(strEval{mm},'wmape') %MINIMIZE WEIGHTED MEAN ABSOLUTE PERCENT ERROR:
         indRem = find(obs == 0);
@@ -104,7 +115,15 @@ for mm = 1 : numel(strEval(:))
         indRem = union(indRem, find(isnan(mod)));
         obs(indRem) = [];
         mod(indRem) = [];
-        nFit(mm) = nanmean( abs(obs(:)).*abs((mod(:) - obs(:))./obs(:)));
+        statOut(mm) = nansum( abs(obs(:)).*abs((mod(:) - obs(:))./obs(:))) / nansum(obs(~isnan(obs) & ~isnan(mod)));
+    elseif regexpbl(strEval{mm},'pearson')
+         %[r,p] = corrcoef(squeeze(obs(indUse,jj,ii)), squeeze(mod(indUse,jj,ii)));
+        corr = corrcoef(obs(:), mod(:));
+        statOut(mm) = corr(2);
+
+        if  nFit == 1
+            statOut(2) = corr(1);
+        end
     elseif regexpbl(strEval{mm}, 'mbe') %mass balance efficiency
         %The 'mbe' (mass balance efficiency) is a statistic of a similar
         %form as the KGE (Kling Gupta Efficiency), adapted to assess model
@@ -146,7 +165,7 @@ for mm = 1 : numel(strEval(:))
         
         bTerm = ((nanmean(mod(:))-nanmean(obs(:)))/nanstd(obs(:)))^2;
         %See definition of the KGE and linear correlation coefficient (can be decomposed into covariance and SD)
-        nFit(mm) = sqrt(rTerm + bTerm);
+        statOut(mm) = sqrt(rTerm + bTerm);
     elseif regexpbl(strEval{mm},'NSE') || regexpbl(strEval{mm},{'nash','sutcliffe'},'and')%MINIMIZE USING NASH-SUTCLIFFE EFFICIENCY:
         if ndims(mod) == 3
             %Calculate the NSE score over time at each grid location, then average
@@ -169,7 +188,7 @@ for mm = 1 : numel(strEval(:))
                 end
             end
 
-            nFit(mm) = mean2d(nFitG);
+            statOut(mm) = mean2d(nFitG);
         elseif numel(size(mod)) == 2
             %Remove nan values:
             indRem = [];
@@ -179,10 +198,10 @@ for mm = 1 : numel(strEval(:))
             mod(indRem) = [];
             
             denomNse = nansum( (obs - nanmean(obs,2)*ones(1, numel(obs(1,:)))).^2, 2);
-            nFit(mm) = nansum((obs - mod).^2, 2) ...
+            statOut(mm) = nansum((obs - mod).^2, 2) ...
                 ./ denomNse;
             if denomNse == 0
-                nFit(mm) = nan;
+                statOut(mm) = nan;
             end 
         end
     elseif regexpbl(strEval{mm},'KGE') || regexpbl(strEval{mm},{'kling','gupta'},'and')        
@@ -223,7 +242,7 @@ for mm = 1 : numel(strEval(:))
                 end
             end
 
-            nFit(mm) = mean2d(nFitG);
+            statOut(mm) = mean2d(nFitG);
         elseif numel(size(mod)) == 2
             %Remove nan values:
             indRem = [];
@@ -243,13 +262,13 @@ for mm = 1 : numel(strEval(:))
             bTerm = (nanmean(mod)/nanmean(obs)-1)^2;
             
             if regexpbl(strEval{mm},'KGEr') %r correlation term: 
-                nFit(mm) = sqrt(rTerm);
+                statOut(mm) = sqrt(rTerm);
             elseif regexpbl(strEval{mm},'KGEs') %standard deviation term
-                nFit(mm) = sqrt(sTerm);
+                statOut(mm) = sqrt(sTerm);
             elseif regexpbl(strEval{mm},'KGEb') %Bias term
-                nFit(mm) = sqrt(bTerm);
+                statOut(mm) = sqrt(bTerm);
             else
-                nFit(mm) = sqrt(rTerm + sTerm + bTerm);
+                statOut(mm) = sqrt(rTerm + sTerm + bTerm);
             end
         end
     elseif regexpbl(strEval{mm},{'Parajka','MODIS'})
@@ -307,17 +326,17 @@ for mm = 1 : numel(strEval(:))
         EOvrAvg = sum2d(EOvr)/(mCntr*lPix);
         EUndAvg = sum2d(EUnd)/(mCntr*lPix);
 
-        nFit(mm) = wghtOvr*EOvrAvg + wghtUnd*EUndAvg;
+        statOut(mm) = wghtOvr*EOvrAvg + wghtUnd*EUndAvg;
 
     else
         error('Unkown fitness ranking method specified.');
     end
 
-    if isempty(nFit(mm) )
-       nFit(mm) = nan; 
+    if isempty(statOut(mm) )
+       statOut(mm) = nan; 
     end
 
-    if isnan(nFit(mm) )
-        nFit(mm) = nanPen;
+    if isnan(statOut(mm) )
+        statOut(mm) = nanPen;
     end
 end
