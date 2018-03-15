@@ -197,7 +197,7 @@ elseif regexpbl(ext, 'tif')
 %READ WC or PRISM binary (bil) files:
 elseif (regexpbl(ext,{'bil','hdr'}) && regexpbl(pathData, {'PRISM','worldclim','wc'})) && ~regexpbl(ext,'asc') %WorldClim binary
     sData = read_geodata_bil(pathData, varLd, lonLd, latLd, yrsLd, mnthsLd);
-
+    
 %READ USGS IMG files
 elseif regexpbl(ext,{'img'})  
     sData = read_geodata_img(pathData);
@@ -256,11 +256,16 @@ elseif regexpbl(pathData,'gpcc') && strcmpi(ext, 'gpcc')
         'calendar', 'gregorian'};
     sData.time = days_since([1900,1,1], [sData.(varDate)(:,1:2), 15*ones([numel(sData.(varDate)(:,1)), 1])], 'gregorian');
     
-%READ ESRI ASCII gridded files
+    
+%READ ESRI ASCII gridded files (from multiple sources, including PRISM)
 elseif regexpbl(ext, 'asc')
-%Read data file:
-    [~,~,ext]= fileparts(pathData);
-    if ~isempty(ext) %Path is file; load only this one
+    [dirData,~,ext]= fileparts(pathData);
+
+    if isempty(ext)
+        dirData = pathData;
+    end
+    
+    if ~isempty(ext) && blMult == 0 %Path is file; load only this one
         [sData.(varLd), hdrESRI, metaESRI] = read_ESRI(pathData);
         
         %Check if data loaded has time embedded in filename
@@ -275,11 +280,19 @@ elseif regexpbl(ext, 'asc')
             end
         end
     else %Find all times in directory provided
-        %Find files:
-        if all(~isnan(yrsLd))
-            [filesUse, sData.(varDate), hdrESRI, metaESRI] = ASC_file_find(pathData, yrsLd, mnthsLd);
+        if regexpbl(pathData, 'PRISM')
+            if all(~isnan(yrsLd))
+                [filesUse, sData.(varDate), hdrESRI, metaESRI] = PRISM_ASC_find(dirData, yrsLd, mnthsLd);
+            else
+                [filesUse, sData.(varDate), hdrESRI, metaESRI] = PRISM_ASC_find(dirData);
+            end
         else
-            [filesUse, sData.(varDate), hdrESRI, metaESRI] = ASC_file_find(pathData);
+            %Find files:
+            if all(~isnan(yrsLd))
+                [filesUse, sData.(varDate), hdrESRI, metaESRI] = ASC_file_find(dirData, yrsLd, mnthsLd);
+            else
+                [filesUse, sData.(varDate), hdrESRI, metaESRI] = ASC_file_find(dirData);
+            end
         end
 
        %Load data:
@@ -301,7 +314,7 @@ elseif regexpbl(ext, 'asc')
        end
     end
 
-    if isfield(sData, 'time')
+    if isfield(sData, 'date') && ~isfield(sData, 'time')
         %Set time variable:
         sData.('attTime') = {'units', 'days since 1900-01-01'; ...
             'calendar', 'gregorian'};
@@ -318,6 +331,8 @@ elseif regexpbl(ext, 'asc')
         if regexpbl(varLd,{'tmp','tas','tmin','tmax','tmn','tmx'})
             sData.(varLd) = sData.(varLd)/10; %WorldClim temperature data scaled by factor of ten
         end
+    elseif regexpbl(pathData,'PRISM')
+        sData.info = {'source','PRISM'};
     elseif regexpbl(pathData,'delta')
         sData.info = {'source','Downscaled data'};
     else

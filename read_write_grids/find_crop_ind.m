@@ -8,15 +8,38 @@ latMin = min(latBnds(:));
 latMax = max(latBnds(:));
 
 if strcmpi(type, 'in')
-    indLonGp = [find(lonMin <= lonGrid, 1, 'first'), find(lonGrid <= lonMax, 1, 'last')];
-    indLatGp = [find(latGrid <= latMax, 1, 'first'), find(latMin <= latGrid, 1, 'last')];
+    indLonW = find(lonMin <= lonGrid, 1, 'first');
+    indLonE = find(lonGrid <= lonMax, 1, 'last');
+    
+    indLatN = find(latGrid <= latMax, 1, 'first');
+    indLatS = find(latMin <= latGrid, 1, 'last');
 elseif strcmpi(type, 'out')
-    indLonGp = [find(lonMin >= lonGrid, 1, 'last'), find(lonGrid >= lonMax, 1, 'first')];
-    indLatGp = [find(latGrid >= latMax, 1, 'last'), find(latMin >= latGrid, 1, 'first')];
+    indLonW = find(lonMin >= lonGrid, 1, 'last');
+    indLonE = find(lonGrid >= lonMax, 1, 'first');
+    
+    indLatN = find(latGrid >= latMax, 1, 'last');
+    indLatS = find(latMin >= latGrid, 1, 'first');
 else
     error('cro_geodata:unknowntype', ['Method type ' type ' has not been programmed for.']);
 end
 
+if isempty(indLonW)
+   indLonW = 1; 
+end
+if isempty(indLonE)
+   indLonE = numel(lonGrid); 
+end
+
+indLonGp = [indLonW, indLonE];
+
+if isempty(indLatN)
+   indLatN = 1; 
+end
+if isempty(indLatS)
+   indLatS = numel(latGrid); 
+end
+
+indLatGp = [indLatN, indLatS];
 
 %Check that two indices returned:
 if numel(indLonGp) ~= 2 && any(isnan(indLonGp))
@@ -27,7 +50,11 @@ if numel(indLatGp) ~= 2 && any(isnan(indLatGp))
 end
 
 %add frame:
-indLonGp = indLonGp + [-fr, +fr];
+if ~isempty(indLonGp)
+    indLonGp = indLonGp + [-fr, +fr];
+else
+    indLonGp = [1, numel(lonGrid)];
+end
 indLatGp = indLatGp + [-fr, +fr];
 
 %Make sure indices are within bounds of available data:
