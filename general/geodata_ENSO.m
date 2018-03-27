@@ -33,12 +33,19 @@ ensoMnthSig = cell([numel(sData(:)), 1]);
 ensoAnnBl = ensoMnthSig;
 ensoAnnSig = ensoMnthSig;
 
+
 %%Calculate input quantities to determine ENSO phase:
 %For stock simulations
 for kk = 1 : numel(sData(:))
     %Ensure data are monthly:
-    if mode(diff(sData{kk}.(varDate)(:,2))) ~= 1
-       error('geodataEnso:notMonthly','The input data do not appear to be monthly, which is a requirement.'); 
+    if isfield(sData{kk}, 'timestep')
+        if ~regexpbl(sData{kk}.timestep, 'month')
+            error('geodataEnso:notMonthly','The input data do not appear to be monthly, which is a requirement.'); 
+        end
+    else
+        if mode(diff(sData{kk}.(varDate)(:,2))) ~= 1
+           error('geodataEnso:notMonthly','The input data do not appear to be monthly, which is a requirement.'); 
+        end
     end
     
     %Ensure data cropped to ENSO region:
@@ -78,7 +85,7 @@ for kk = 1 : numel(sData(:))
         negEnsoTemp = ensoMnthSig{kk}(indCurr) <= -anomCrit;
 
         %Positive excursions:
-        %Strart of runs:
+        %Start of runs:
         I = run_length(posEnsoTemp);
         %Max length of positive run:
         nPosRun = max(I(posEnsoTemp == 1));

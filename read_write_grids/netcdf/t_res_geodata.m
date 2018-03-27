@@ -18,7 +18,7 @@
 % along with the Downscaling Package.  If not, see 
 % <http://www.gnu.org/licenses/>.
 
-function strRes = t_res_geodata(time,timeUnits)
+function strRes = t_res_geodata(time, timeUnits)
 
 if numel(time) == 1
     strRes = 'unknown';

@@ -11,26 +11,9 @@ if isfield(sDataIn, ['att' varData])
             strUnits = 'mm';
         elseif strcmpi(strUnits, 'kg m-2 s-1')
             scl = 86400;
-            if regexpbl(timeStep, {'day', 'daily'})
-                sDataIn.(varData) = sDataIn.(varData)*scl;
-                strUnits = 'mm/day';
-            elseif regexpbl(timeStep, {'mnth', 'month'})
-                if numel(size(sDataIn.(varData))) == 3
-                    for ii = 1 : numel(sDataIn.date(:,1))
-                        sDataIn.(varData)(ii,:,:) = sDataIn.(varData)(ii,:,:)*eomday(sDataIn.date(ii,1), sDataIn.date(ii,2))*scl;
-                    end
-                    strUnits = 'mm/month';
-                elseif numel(size(sDataIn.(varData))) == 2
-                    sDataIn.(varData)(:,:) = sDataIn.(varData)(:,:)*eomday(sDataIn.date(1,1), sDataIn.date(1,2))*scl;
-                    strUnits = 'mm/month';
-                else
-                    error('struct_pre_2_mm:unknownSz', ['The data array has size ' num2str(numel(size(sDataIn.(varData)))) ', but only sizes 2 and 3 have been programmed for.']);
-                end
-                    
-                clear ii
-            else
-                error('struct_pre_2_mm:unknownTimeStep', ['The time step ' timeStep ' has not been programmed for.']);
-            end
+
+            sDataIn.(varData) = sDataIn.(varData)*scl;
+            strUnits = 'mm/day';
         elseif strcmpi(strUnits, 'mm h-1')
             if regexpbl(timeStep, {'day', 'daily'})
                 sDataIn.(varData) = sDataIn.(varData)*24;
@@ -38,7 +21,7 @@ if isfield(sDataIn, ['att' varData])
                 error('struct_pre_2_mm:unknownTimeStep', ['The time step ' timeStep ' has not been programmed for.']);
             end
             strUnits = 'mm';
-        elseif ~strcmpi(strUnits, 'mm') && ~((strcmpi(strUnits, 'mm/day') && regexpbl(timeStep, {'day','daily'})) || (strcmpi(strUnits, 'mm/month') && regexpbl(timeStep, 'month')))
+        elseif ~strcmpi(strUnits, 'mm') && ~(strcmpi(strUnits, 'mm/day') || (strcmpi(strUnits, 'mm/month') && regexpbl(timeStep, 'month')))
             warning('ERA_ds:unknownPreUnits', ['Precipitation units of ' strUnits ...
                 ' have not been programmed for.']);
         end
