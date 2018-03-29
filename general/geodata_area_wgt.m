@@ -21,6 +21,7 @@
 function dataOut = geodata_area_wgt(lonIn,latIn,dataIn,lonOut,latOut, varargin)
 
 
+%Results are same as 'area_conserve_remap', but that function is faster.
 
 %Varargin specifies 
 if ~isempty(varargin(:)) && regexpbl(varargin{1}, 'nansum')
@@ -31,8 +32,23 @@ end
 
 %Make sure data does not have superfuluous index:
 dataIn = squeeze(dataIn);
-if length(size(dataIn)) == 3
-   error('area_int:dataD','Function only designed to work with 2D arrays'); 
+szIn = size(dataIn);
+
+%Check dimension sizes and orientation
+bl3D = 0;
+if length(szIn) == 3
+    bl3D = 1;
+    if ~isequal([numel(latIn), numel(lonIn)],szIn(2:3))
+        error('geodataAreaWgt:data3dOrder','The function currently only works with 3d data when the dimensions are in the order time, lat, lon.'); 
+    end
+    
+    szOut = [szIn(1), numel(latIn), numel(lonIn)];
+else
+    if ~any(numel(latIn) == szIn) || ~any(numel(lonIn) == szIn)  
+        error('geodataAreaWgt:data2dSize','The length of the lat and lon dimensions do not match data lengths.'); 
+    end
+    
+    szOut = [numel(latIn), numel(lonIn)];
 end
 
 %%Reorient data and reference vectors:
@@ -41,7 +57,7 @@ end
 if rLonR ~= 1 && cLonR == 1
     lonOut = lonOut';  
 elseif rLonR ~= 1 && cLonR ~= 1
-    error('area_int_1D:refMat',['The reference longitudes are in matrix '...
+    error('geodataAreaWgt:refMat',['The reference longitudes are in matrix '...
         'form but a vector is required.']);
 end
 
@@ -50,7 +66,7 @@ end
 if rLonD ~= 1 && cLonD == 1
     lonIn = lonIn';  
 elseif rLonD ~= 1 && cLonD ~= 1
-    error('area_int_1D:refMat',['The reference longitudes are in matrix '...
+    error('geodataAreaWgt:refMat',['The reference longitudes are in matrix '...
         'form but a vector is required.']);
 end
 
@@ -59,7 +75,7 @@ end
 if rLatR == 1 && cLatR ~= 1
     latOut = latOut';  
 elseif rLatR ~= 1 && cLatR ~= 1
-    error('area_int_1D:refMat',['The reference longitudes are in matrix '...
+    error('geodataAreaWgt:refMat',['The reference longitudes are in matrix '...
         'form but a vector is required.']);
 end
 
@@ -68,18 +84,29 @@ end
 if rLatD == 1 && cLatD ~= 1
     latIn = latIn';  
 elseif rLatD ~= 1 && cLatD ~= 1
-    error('area_int_1D:refMat',['The reference longitudes are in matrix '...
+    error('geodataAreaWgt:refMat',['The reference longitudes are in matrix '...
         'form but a vector is required.']);
 end
 
 %Flip and sort data so that it is in map orientation:
-if ~issorted(lonIn)
-    [lonIn, indLonOrdIn] = sort(lonIn);
-    dataIn = dataIn(:,indLonOrdIn);
-end
-if ~issorted(flipud(latIn))
-    [latIn, indLatOrdIn] = sort(latIn,'descend');
-    dataIn = dataIn(indLatOrdIn,:);
+if bl3D
+    if ~issorted(lonIn)
+        [lonIn, indLonOrdIn] = sort(lonIn);
+        dataIn = dataIn(:,:,indLonOrdIn);
+    end
+    if ~issorted(flipud(latIn))
+        [latIn, indLatOrdIn] = sort(latIn,'descend');
+        dataIn = dataIn(:,indLatOrdIn,:);
+    end
+else %2D array
+    if ~issorted(lonIn)
+        [lonIn, indLonOrdIn] = sort(lonIn);
+        dataIn = dataIn(:,indLonOrdIn);
+    end
+    if ~issorted(flipud(latIn))
+        [latIn, indLatOrdIn] = sort(latIn,'descend');
+        dataIn = dataIn(indLatOrdIn,:);
+    end
 end
 
 %Sort reference coordinates so they're in map orientation:
@@ -93,15 +120,8 @@ if ~issorted(flipud(latOut))
     [latOut, indLatOrdOut] = sort(latOut,'descend');
 end
 
-%Check that size of lat and lon matches size of data
-if length(latIn) ~= length(dataIn(:,1)) || length(lonIn) ~= length(dataIn(1,:))
-    error('area_int_2D:dataMismatch',['The dimensions of the data do '...
-        'not match the dimensions of the corresponding latitude and '...
-        'longitude vectors.']);
-end
-
 %Initialize output array:
-dataOut = nan(numel(latOut), numel(lonOut));
+dataOut = nan(szOut, 'single');
 
 %If gridding is same, but one is simply outside the other, fill in with
 %nans and return
@@ -125,10 +145,18 @@ end
 %inside the other.  This is much more computationally efficient to solve.
 blSame = 0;
 if nLatSame == numel(latOut) && nLonSame == numel(lonOut) %Reference grid is subset of input grid
-    dataOut = dataIn(indUseLatIn,indUseLonIn);
+    if bl3D
+        dataOut = dataIn(:,indUseLatIn,indUseLonIn);
+    else
+        dataOut = dataIn(indUseLatIn,indUseLonIn);
+    end
     blSame = 1;
 elseif nLatSame == numel(latIn) && nLonSame == numel(lonIn) %Input grid is subset of reference grid
-    dataOut(indUseLatOut,indUseLonOut) = dataIn;
+    if bl3D
+        dataOut(:,indUseLatOut,indUseLonOut) = dataIn;
+    else
+        dataOut(indUseLatOut,indUseLonOut) = dataIn;
+    end
     blSame = 1;
 end
     
@@ -183,8 +211,6 @@ dataOut = nan([numel(latOut), numel(lonOut)], 'single');
 indLonOutUse = find(lonOutEdg(2:end) > min(lonInEdg) & lonOutEdg(1:end-1) < max(lonInEdg));
 indLatOutUse = find(latOutEdg(2:end) < max(latInEdg) & latOutEdg(1:end-1) > min(latInEdg));
 
-szDataIn = size(dataIn);
-
 for jj = 1 : numel(indLatOutUse)
     %Bottom of input must be less than top of output & Top of input must be greater than botton of output
     indLatCurr = find(latInEdg(2:end) < latOutEdg(indLatOutUse(jj)) & latInEdg(1:end-1) > latOutEdg(indLatOutUse(jj)+1));
@@ -202,10 +228,10 @@ for jj = 1 : numel(indLatOutUse)
         lonRgt = min(lonInEdg(indLonCurr+1), lonOutEdg(indLonOutUse(ii)+1));
         
         %Find weighting factors:
-        %Area section on sphere in degrees = (4*pi*R^2/360)*(lon2 - lon1)*(cos(lat1)-cos(lat2))
+        %Area section on sphere in degrees = (4*pi*R^2/360)*(lon2 - lon1)*(sin(lat1)-sin(lat2))
         %Remove constant factor because it factors out in weighting
         %"dly" factor
-        dly = (cosd(latBtm) - cosd(latTop))*ones([1,numel(indLonCurr)]);
+        dly = abs((sind(latBtm) - sind(latTop))*ones([1,numel(indLonCurr)]));
         %"dlx" factor
         dlx = ones([numel(indLatCurr),1])*(lonRgt - lonLft);
         wgt = dly.*dlx;  
@@ -213,14 +239,27 @@ for jj = 1 : numel(indLatOutUse)
         %Create Indices in full form
         rowMesh = indLatCurr*ones([1, numel(indLonCurr)]);
         colMesh = ones([numel(indLatCurr), 1])*indLonCurr;
-        
-        indCurr = sub2ind(szDataIn, rowMesh(:), colMesh(:));
-        
+
         %Calculate output
-        if regexpbl(type, 'nan')
-            dataOut(indLatOutUse(jj), indLonOutUse(ii)) = nanwmean(dataIn(indCurr(:)), wgt(:));
+        if bl3D     
+            if regexpbl(type, 'nan')
+                for ll = 1 : szIn(1)
+                    indCurr = sub2ind(szIn, ll*ones([numel(colMesh), 1]), rowMesh(:), colMesh(:));
+                    dataOut(ll, indLatOutUse(jj), indLonOutUse(ii)) = nanwmean(squeeze(dataIn(indCurr(:))), wgt(:));
+                end
+            else
+                for ll = 1 : szIn(1)
+                    indCurr = sub2ind(szIn, ll*ones([numel(colMesh), 1]), rowMesh(:), colMesh(:));
+                    dataOut(ll, indLatOutUse(jj), indLonOutUse(ii)) = wmean(squeeze(dataIn(indCurr(:))), wgt(:));
+                end   
+            end
         else
-            dataOut(indLatOutUse(jj), indLonOutUse(ii)) = wmean(dataIn(indCurr(:)), wgt(:));
+            indCurr = sub2ind(szIn, rowMesh(:), colMesh(:));
+            if regexpbl(type, 'nan')
+                dataOut(indLatOutUse(jj), indLonOutUse(ii)) = nanwmean(dataIn(indCurr(:)), wgt(:));
+            else
+                dataOut(indLatOutUse(jj), indLonOutUse(ii)) = wmean(dataIn(indCurr(:)), wgt(:));
+            end
         end
     end
 end

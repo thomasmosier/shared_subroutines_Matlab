@@ -300,7 +300,7 @@ else
     warning('readGridNcWBnds:noTime','No time variable was found in the NetCDF file being loaded.');
 end
 
-
+%Loop over variables to load
 for ii = 1 : numel(varLd)
     infoCurr = ncinfo(path, varLd{ii});
     szCurr = extract_field(infoCurr, 'Size');
@@ -326,20 +326,28 @@ for ii = 1 : numel(varLd)
             dLat = nan;
             dLon = nan;
             if any(szCurr == nLonOrg) && any(szCurr == nLatOrg) 
-                for jj = 1 : numel(szCurr)
-                    switch szCurr(jj)
-                        case nLatOrg
-                            dLat = jj;
-                        case nLonOrg
-                            dLon = jj;
-                        otherwise
-                            warning('readGridNcBnds:noSizeDim',['There is no '...
-                                'matching size dimension for ' num2str(jj) '.']);
+                if szCurr(1) ~= szCurr(2)
+                    for jj = 1 : numel(szCurr)
+                        switch szCurr(jj)
+                            case nLatOrg
+                                dLat = jj;
+                            case nLonOrg
+                                dLon = jj;
+    %                         otherwise
+    %                             warning('readGridNcBnds:noSizeDim',['There is no '...
+    %                                 'matching size for dimension ' num2str(jj) ' in variable ' num2str(ii) '.']);
+                        end
                     end
+                else %length of both dimensions are the same. More information needed...
+                    dimRaw = ncinfo(path, varLd{ii});
+                    dimNC = extract_field(dimRaw.Dimensions,'Name');
+                    
+                    [dLat, ~] = find_dim(dimNC, 'latitude');
+                    [dLon, ~] = find_dim(dimNC, 'longitude');
                 end
 
                 %Find ordering:
-                if numel(szCurr) == 2 && all(~isnan([dLat, dLon]))
+                if all(~isnan([dLat, dLon]))
                     [~, ordr] = sort([dLat, dLon]);
 
                     start = [min(indLatLd), min(indLonLd)];
@@ -362,6 +370,48 @@ for ii = 1 : numel(varLd)
                         
                         sData.(varLd{ii}) = sData.(varLd{ii})(:,indLonSrt);
                     end
+                elseif ~isnan(dLat) 
+                    start = [min(indLatLd), 1];
+                    count = [max(indLatLd) - min(indLatLd) + 1, szCurr(setdiff([1,2], dLat))];
+                    if dLat == 2
+                        start = fliplr(start);
+                        count = fliplr(count);
+                    end
+                    
+                    %Load segment:
+                    sData.(varLd{ii}) = ncread(path, varLd{ii}, start, count);
+                    
+                    if ~issorted(indLatLd)
+                        [~, indLatSrt] = sort(indLatLd);
+                        
+                        if dLat == 1
+                            sData.(varLd{ii}) = sData.(varLd{ii})(indLatSrt, :);
+                        else
+                            sData.(varLd{ii}) = sData.(varLd{ii})(:, indLatSrt);
+                        end
+                    end
+                elseif ~isnan(dLon)
+                    start = [1, min(indLonLd)];
+                    count = [szCurr(setdiff([1,2], dLon)), max(indLonLd) - min(indLonLd) + 1];
+                    if dLon == 1
+                        start = fliplr(start);
+                        count = fliplr(count);
+                    end
+                    
+                    %Load segment:
+                    sData.(varLd{ii}) = ncread(path, varLd{ii}, start, count);
+                    
+                    if ~issorted(indLonLd)
+                        [~, indLonSrt] = sort(indLonLd);
+                        
+                        if dLon == 2
+                            sData.(varLd{ii}) = sData.(varLd{ii})(:, indLonSrt);
+                        else
+                            sData.(varLd{ii}) = sData.(varLd{ii})(indLonSrt, :);
+                        end
+                    end
+                else
+                    warning('readGridNcWBnds:twoDGridNotLoaded', [varLd{ii} ' is not being loaded because the oreientation could not be determined.'])
                 end
             elseif any(szCurr == nLonOrg) 
                 dimLon = find(szCurr == nLonOrg);
@@ -420,18 +470,3 @@ for ii = 1 : numel(varLd)
     
     sData = add_ncatt_2_struct(sData, path, varLd{ii});
 end
-
-
-
-
-% for jj = 1 : varLon
-%     if regexpbl(varLon{jj}, varLd)
-%         
-%     end
-% end
-% lonMODIS = ncread(path, 'lon');
-%     lonMODIS = lonMODIS(:)';
-% latMODIS = ncread(path, 'lat');
-%     latMODIS = latMODIS(:);
-% MODISTemp = ncread(path, varLd);
-

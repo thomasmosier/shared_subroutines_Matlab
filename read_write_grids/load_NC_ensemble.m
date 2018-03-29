@@ -1,4 +1,16 @@
-function sData = load_NC_ensemble(pathLd, varLd, varOut, lonUse, latUse, yrsLd, fr, crop)
+function sData = load_NC_ensemble(pathLd, varLd, varOut, lonUse, latUse, yrsLd, fr, crop, varargin)
+
+blWgt = 0;
+lonWgt = [];
+latWgt = [];
+for ii = 1 : numel(varargin(:))
+    if regexpbl(varargin{ii}, {'area', 'wgt'}, 'and')
+        blWgt = 1;
+        lonWgt = varargin{ii+1};
+        latWgt = varargin{ii+2};
+    end
+end
+clear ii
 
 if ischar(pathLd)
     pathLd = {pathLd};
@@ -14,12 +26,15 @@ end
 %Cell/structure arrays for main data to be processed:
 sData = cell(nMem, 1);
 
+%Loop over input paths
 for kk = 1 : nMem
+    disp(['Loading ensemble member ' num2str(kk) ' of ' num2str(nMem) '.']);
+    
     if iscell(pathLd{1})
         sDataTemp = cell(numel(varLd));
 
         for ll = 1 : numel(varLd(:))
-            sDataTemp{ll} = read_geodata_v2(pathLd{ll}{kk}, varLd{ll}, lonUse, latUse, yrsLd, fr, crop, 'units', 'standard');
+            sDataTemp{ll} = read_geodata_v2(pathLd{ll}{kk}, varLd{ll}, lonUse, latUse, yrsLd, fr, crop, 'units', 'standard', 'no_disp');
             sDataTemp{ll} = struct_2_standard_units(sDataTemp{ll}, varLd{ll}, sDataTemp{ll}.timestep);
         end
         clear ll
@@ -37,8 +52,18 @@ for kk = 1 : nMem
             error('GISSCompare:unknownVar',['Variable ' varOut ' is not expected to require loading multiple variables.']);
         end
     else
-        sData{kk} = read_geodata_v2(pathLd{kk}, varOut, lonUse, latUse, yrsLd, fr, crop, 'units', 'standard');
+        sData{kk} = read_geodata_v2(pathLd{kk}, varOut, lonUse, latUse, yrsLd, fr, crop, 'units', 'standard', 'no_disp');
         sData{kk} = struct_2_standard_units(sData{kk}, varOut, sData{kk}.timestep);
+    end
+    
+    if blWgt == 1
+        varLon = 'longitude';
+        varLat = 'latitude';
+
+        sData{kk}.(varOut) = area_conserve_remap(sData{kk}.(varLon), sData{kk}.(varLat), sData{kk}.(varOut), lonWgt, latWgt);
+
+        sData{kk}.(varLon) = lonWgt;
+        sData{kk}.(varLat) = latWgt;
     end
 end
 clear kk

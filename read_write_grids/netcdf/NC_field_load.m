@@ -40,34 +40,35 @@ else
     indD = {tInd, latInd, lonInd};
     dimOrdered = {'time';'latitude';'longitude'};
 
-    varLonTest = {'lon','longitude','col','x','Lon','Longitude','Col','X','LON','LONGITUDE','COL','west_east','east_west'};
-    varLatTest = {'lat','latitude','row','y','Lat','Latitude','Row','Y','LAT','LATITUDE','ROW','north_south','south_north'};
+%     varLonTest = {'lon','longitude','col','x','Lon','Longitude','Col','X','LON','LONGITUDE','COL','west_east','east_west'};
+%     varLatTest = {'lat','latitude','row','y','Lat','Latitude','Row','Y','LAT','LATITUDE','ROW','north_south','south_north'};
 
     if ~isempty(dimNC) 
-        if ~any(strcmp(dimOrdered{2},dimNC))
-            for ii = 1 : numel(varLatTest)
-                indLatNm = find(strcmp(dimNC, varLatTest{ii}) == 1);
-                if ~isempty(indLatNm)
-                   dimOrdered{2} = varLatTest{ii};
-                   break
-                end
-            end
-        end
+        [~, dimOrdered{2}] = find_dim(dimNC,dimOrdered{2});
+%         if ~any(strcmp(dimOrdered{2},dimNC))
+%             for ii = 1 : numel(varLatTest)
+%                 indLatNm = find(strcmp(dimNC, varLatTest{ii}) == 1);
+%                 if ~isempty(indLatNm)
+%                    dimOrdered{2} = varLatTest{ii};
+%                    break
+%                 end
+%             end
+%         end
 
         if ~any(strcmp(dimOrdered{2},dimNC))
             error('NC_data_use:latNm','Cannot find correct name of latitude dimension.');
         end
 
-        if ~any(strcmp(dimOrdered{3},dimNC))
-
-            for ii = 1 : numel(varLonTest)
-                indLonNm = find(strcmp(dimNC, varLonTest{ii}) == 1);
-                if ~isempty(indLonNm)
-                   dimOrdered{3} = varLonTest{ii};
-                   break
-                end
-            end
-        end
+        [~, dimOrdered{3}] = find_dim(dimNC,dimOrdered{3});
+%         if ~any(strcmp(dimOrdered{3},dimNC))
+%             for ii = 1 : numel(varLonTest)
+%                 indLonNm = find(strcmp(dimNC, varLonTest{ii}) == 1);
+%                 if ~isempty(indLonNm)
+%                    dimOrdered{3} = varLonTest{ii};
+%                    break
+%                 end
+%             end
+%         end
 
         if ~any(strcmp(dimOrdered{3},dimNC))
            error('NC_data_use:lonNm','Cannot find correct name of longitude dimension.');
@@ -129,30 +130,31 @@ else
 
         dimNC = varNc;
 
-        if ~any(strcmp(dimOrdered{3},dimNC))
-            %Find longitude variable:
-            for ii = 1 : numel(dimNC)
-                if any(strcmpi(varLonTest, dimNC{ii}))
-                    dimOrdered{3} = dimNC{ii};
-                    break
-                end
-            end
-        end
+        [~, dimOrdered{3}] = find_dim(dimNC,dimOrdered{3});
+%         if ~any(strcmp(dimOrdered{3},dimNC))
+%             %Find longitude variable:
+%             for ii = 1 : numel(dimNC)
+%                 if any(strcmpi(varLonTest, dimNC{ii}))
+%                     dimOrdered{3} = dimNC{ii};
+%                     break
+%                 end
+%             end
+%         end
 
         if ~any(strcmp(dimOrdered{3},dimNC))
            error('NC_data_use:lonNm','Cannot find correct name of longitude dimension.');
         end
 
-        if ~any(strcmp(dimOrdered{2},dimNC))
-            %Find latitude variable:
-
-            for ii = 1 : numel(dimNC)
-                if any(strcmpi(varLatTest, dimNC{ii}))
-                    dimOrdered{2} = dimNC{ii};
-                    break
-                end
-            end 
-        end
+       [~, dimOrdered{2}] = find_dim(dimNC,dimOrdered{2});   
+%         if ~any(strcmp(dimOrdered{2},dimNC))
+%             %Find latitude variable:
+%             for ii = 1 : numel(dimNC)
+%                 if any(strcmpi(varLatTest, dimNC{ii}))
+%                     dimOrdered{2} = dimNC{ii};
+%                     break
+%                 end
+%             end 
+%         end
 
         if ~any(strcmp(dimOrdered{2},dimNC))
            error('NC_data_use:latNm','Cannot find correct name of latitude dimension.');
