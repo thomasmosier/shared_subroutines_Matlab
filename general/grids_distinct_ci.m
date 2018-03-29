@@ -32,4 +32,5 @@ end
 clear kk
 
 gridCiDiff(gridCiDiff < 0) = 0;
+gridCiDiff(isnan(gridCiDiff)) = 0;
 

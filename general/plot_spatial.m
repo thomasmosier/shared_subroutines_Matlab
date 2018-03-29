@@ -1,8 +1,10 @@
-function plot_spatial(data, sPlot, pathFig, clrLabel, varargin)
+function plot_spatial(data, sPlot, clrLabel, varargin)
 
 ci = [];
 lat = [];
 lon = [];
+path = [];
+box = [];
 if ~isempty(varargin(:))
    for ii = 1 : numel(varargin(:)) 
        if strcmpi(varargin{ii}, 'ci')
@@ -10,7 +12,11 @@ if ~isempty(varargin(:))
        elseif strcmpi(varargin{ii}, 'lat')
            lat = varargin{ii+1};
        elseif strcmpi(varargin{ii}, 'lon')
-           lon = varargin{ii+1};    
+           lon = varargin{ii+1}; 
+       elseif strcmpi(varargin{ii}, 'path')
+           path = varargin{ii+1}; 
+       elseif strcmpi(varargin{ii}, 'box')
+           box = varargin{ii+1}; %[lonW, lonE, latS, latN]
        end
    end
    clear ii
@@ -23,26 +29,42 @@ hold on
 
 if ~isempty(lat) && ~isempty(lon)
     hPlot = imagesc(lon, lat, data);
+    
+    if isfield(sPlot, 'lonlimit')
+        indLonBnd = [find(lon >= min(sPlot.lonlimit), 1, 'first'), find(lon <= max(sPlot.lonlimit), 1, 'last')];
+    end
+    if isfield(sPlot, 'latlimit')
+        indLatBnd = [find(lat <= max(sPlot.latlimit), 1, 'first'), find(lat >= min(sPlot.latlimit), 1, 'last')];
+    end
+    
+    edgLon = box_edg(lon);
+    edgLat = box_edg(lat);
 else
     hPlot = imagesc(data);
+    indLonBnd = [];
+    indLatBnd = [];
 end
 
 set(gca,'YDir','normal')
 set(hPlot,'AlphaData',~isnan(data));
 whitebg([0.6,0.6,0.6]);
-mxPerClrBar = max2d(abs(data));
-valCBar = [-mxPerClrBar, mxPerClrBar];
+%Color bar properties:
 hClr = colorbar; 
-if isfield(sPlot, clrmap)
+if isfield(sPlot, 'clrmap')
     colormap(sPlot.clrmap); 
 end
-caxis(valCBar);
+if isfield(sPlot, 'cntrzero') && sPlot.cntrzero == 1
+    mxPerClrBar = max2d(abs(data));
+    valCBar = [-mxPerClrBar, mxPerClrBar];
+    caxis(valCBar);
+end
+
 set(hFig, 'color', 'white');
 %set(hPDiff, 'EdgeColor', 'none');
 %Add hatches:
 if ~isempty(ci)
     if isempty(lat) || isempty(lon)
-       error('plotSpatial:nocrd','Coordinates must be input when the optional confidence region is being used.'); 
+       error('plotSpatial:nocrdci','Coordinates must be input when the optional confidence region is being used.'); 
     end
     
     ci(ci > 0) = 1;
@@ -51,8 +73,6 @@ if ~isempty(ci)
     indLwCf = find(ci == 0);
     [rLwCf, cLwCf] = ind2sub(size(ci), indLwCf);
     hLwCf = nan(numel(indLwCf), 1);
-    edgLon = box_edg(lon);
-    edgLat = box_edg(lat);
     for kk = 1 : numel(indLwCf)
         xCurr = [edgLon(cLwCf(kk)), edgLon(cLwCf(kk)+1), edgLon(cLwCf(kk)+1), edgLon(cLwCf(kk)  )];
         yCurr = [edgLat(rLwCf(kk)), edgLat(rLwCf(kk)  ), edgLat(rLwCf(kk)+1), edgLat(rLwCf(kk)+1)];
@@ -61,9 +81,24 @@ if ~isempty(ci)
         hatchfill(hLwCf(kk));
     end
 end
-hold off; 
-xlim([edgLon(indLonBnd(1)), edgLon(indLonBnd(end)+1)]);
-ylim([edgLat(indLatBnd(end)+1), edgLat(indLatBnd(1))]);
+
+if ~isempty(box)
+    if ~isempty(lat) || ~isempty(lon)
+        boxDef = [box(1), box(3), box(2) - box(1), box(4) - box(3)]; %[xLeft, ySouth, width, height]
+        hRect = rectangle('Position',boxDef);
+        set(hRect, 'LineWidth', sPlot.lnwd);
+    else
+        error('plotSpatial:nocrdBox','Coordinates must be input when the optional box argument is being used.'); 
+    end
+end
+
+if ~isempty(indLonBnd)
+    xlim([edgLon(indLonBnd(1)), edgLon(indLonBnd(end)+1)]);
+end
+if ~isempty(indLatBnd)
+    ylim([edgLat(indLatBnd(end)+1), edgLat(indLatBnd(1))]);
+end
+hold off;
 hXLab = xlabel('Degrees East');
 hYLab = ylabel('Degrees North');
 hCLab = ylabel(hClr, clrLabel);
@@ -85,20 +120,21 @@ set(gca, ...
     'fontSize'    , sPlot.axfntsz, ...
     'LineWidth'   , sPlot.lnwd);
 
-
-if exist([pathFig, '.fig'], 'file')
-    delete([pathFig, '.fig'])
+if ~isempty(path)
+    if exist([path, '.fig'], 'file')
+        delete([path, '.fig'])
+    end
+    if exist([path, '.png'], 'file')
+        delete([path, '.png'])
+    end
+    if exist([path, '.eps'], 'file')
+        delete([path, '.eps'])
+    end
+    if exist([path, '.tiff'], 'file')
+        delete([path, '.tiff'])
+    end
+    savefig(hFig, [path '.fig']);
+    export_fig([path '.eps'],'-painters', sPlot.res);
+    export_fig([path '.png'],'-painters', sPlot.res);
+    export_fig([path '.tiff'],'-painters', sPlot.res);
 end
-if exist([pathFig, '.png'], 'file')
-    delete([pathFig, '.png'])
-end
-if exist([pathFig, '.eps'], 'file')
-    delete([pathFig, '.eps'])
-end
-if exist([pathFig, '.tiff'], 'file')
-    delete([pathFig, '.tiff'])
-end
-savefig(hFig, [pathFig '.fig']);
-export_fig([pathFig '.eps'],'-painters', strFigRes);
-export_fig([pathFig '.png'],'-painters', strFigRes);
-export_fig([pathFig '.tiff'],'-painters', strFigRes);

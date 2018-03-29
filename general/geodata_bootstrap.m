@@ -59,15 +59,14 @@ if isempty(gcp('nocreate'))
 else
     blClose = 0;
 end
-            
+         
+[rUse, cUse] = ind2sub(szData(2:3), indUse);
 parfor ll = 1 : numel(indUse)
     rCurr = rUse(ll);
     cCurr = cUse(ll);
 
     btDataTemp = nan([nBt, 1]);
 
-    tsDataTemp = btDataTemp;
-    
     %Loop over bootstrap iterations:
     for mm = 1 : nBt
         %Keep only bootstrapped mean
@@ -78,22 +77,22 @@ parfor ll = 1 : numel(indUse)
         end
     end
     
-    %Sort long-term mean calculated from bootstrap iterations
-    if strcmpi(varUse, varYrDetr)
-        tsDataTemp = sort(ltEnsAvgData(rCurr,cCurr) + btDataTemp);
-    elseif strcmpi(varUse, varYr)
-        tsDataTemp = sort(btDataTemp);
-    else
-        error('GissAnalysis:uknownAnalysisVar',['The analysis variable, ' varUse ', does not match the programmed options.']);
-    end
+    %Sort bootstrapped values
+    btDataTemp = sort(btDataTemp);
+
     %Remove any nan values:
-    tsDataTemp(isnan(tsDataTemp)) = [];
+    btDataTemp(isnan(btDataTemp)) = [];
 
     %Calculate mean from bootstrap:
-    avgDataTemp(ll) = squeeze(nanmean(tsDataTemp));
+    if ~isempty(btDataTemp)
+        avgDataTemp(ll) = squeeze(nanmean(btDataTemp));
 
-    %Calculate confidendence interval for each long-term mean based on bootstrapped means
-    ciDataTemp(:,ll) = tsDataTemp(round([valLb,valUb]*numel(tsDataTemp)));
+        %Calculate confidendence interval for each long-term mean based on bootstrapped means
+        ciDataTemp(:,ll) = btDataTemp(round([valLb,valUb]*numel(btDataTemp)));
+    else
+        avgDataTemp(ll) = nan;
+        ciDataTemp(:,ll) = nan(2,1);
+    end
 end
 clear ll
 

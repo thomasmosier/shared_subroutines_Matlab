@@ -1,4 +1,12 @@
-function ltMean = geodata_ensemble_clim(sData, var)    
+function ltMean = geodata_ensemble_clim(sData, var, varargin)
+indUse = [];
+if ~isempty(varargin)
+    for ii = 1 : numel(varargin(:))
+        if strcmpi(varargin{ii}, 'ind')
+            indUse = varargin{ii+1};
+        end
+    end
+end
 
 if iscell(sData)
     nMod = numel(sData(:));
@@ -8,7 +16,8 @@ if iscell(sData)
     tempAvg = nan([nMod,  szData(2:3)], 'single');
     nYrsStck = zeros([nMod,  szData(2:3)], 'single');
     for kk = 1 : nMod
-        for ll = 1 : szData(1)
+        nTimeCurr = numel(sData{kk}.(var)(:,1,1));
+        for ll = 1 : nTimeCurr
             nYrsStck(kk,:,:) = nYrsStck(kk,:,:) + ~isnan(sData{kk}.(var)(ll,:,:));
         end
         clear ll
@@ -20,4 +29,8 @@ elseif isstruct(sData)
     ltMean = squeeze(nanmean(sData.(var), 1));
 else
     error('geodataEnsembleClim:unkownGeodataClass', ['The geodata class ' class(sData) ' has not been programmed for.']);
+end
+
+if ~isempty(indUse)
+    ltMean(setdiff((1:numel(ltMean)), indUse)) = nan;
 end
