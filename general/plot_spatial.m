@@ -47,16 +47,22 @@ end
 
 set(gca,'YDir','normal')
 set(hPlot,'AlphaData',~isnan(data));
-whitebg([0.6,0.6,0.6]);
+whitebg(hFig, [0.6,0.6,0.6]);
 %Color bar properties:
 hClr = colorbar; 
 if isfield(sPlot, 'clrmap')
     colormap(sPlot.clrmap); 
 end
 if isfield(sPlot, 'cntrzero') && sPlot.cntrzero == 1
-    mxPerClrBar = max2d(abs(data));
+    if isfield(sPlot, 'clrrng') && ~isempty(sPlot.clrrng) && all(~isnan(sPlot.clrrng))
+        mxPerClrBar = max(sPlot.clrrng);
+    else
+        mxPerClrBar = max2d(abs(data));
+    end
     valCBar = [-mxPerClrBar, mxPerClrBar];
     caxis(valCBar);
+elseif isfield(sPlot, 'clrrng') && ~isempty(sPlot.clrrng) && all(~isnan(sPlot.clrrng))
+    caxis(sPlot.clrrng);
 end
 
 set(hFig, 'color', 'white');

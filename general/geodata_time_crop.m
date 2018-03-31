@@ -5,12 +5,17 @@ varTime = 'time';
 
 if iscell(sData)
     for kk = 1 : numel(sData(:))
+        nDim = ndims(sData{kk}.(varOut));
         indTimeUse = intersect( ...
             find(ismember(sData{kk}.(varDate)(:,2), mnths) == 1), ...
             find(sData{kk}.(varDate)(:,1) >= min(yrs) & sData{kk}.(varDate)(:,1) <= max(yrs)));
 
         sData{kk}.(varDate) = sData{kk}.(varDate)(indTimeUse,:);
-        sData{kk}.(varOut) 	= sData{kk}.(varOut )(indTimeUse,:,:);
+        if nDim == 3
+            sData{kk}.(varOut) 	= sData{kk}.(varOut )(indTimeUse,:,:);
+        else
+            sData{kk}.(varOut) 	= sData{kk}.(varOut )(indTimeUse,:);
+        end
         if isfield(sData{kk}, varTime)
             sData{kk}.(varTime) = sData{kk}.(varTime)(indTimeUse);
         end
@@ -22,7 +27,11 @@ elseif isstruct(sData)
         find(sData.(varDate)(:,1) >= min(yrs) & sData.(varDate)(:,1) <= max(yrs)));
 
     sData.(varDate) = sData.(varDate)(indTimeUse,:);
-    sData.(varOut) 	= sData.(varOut )(indTimeUse,:,:);
+    if ndims(sData.(varOut)) == 3
+        sData.(varOut) 	= sData.(varOut )(indTimeUse,:,:);
+    else
+        sData.(varOut) 	= sData.(varOut )(indTimeUse,:);
+    end
     if isfield(sData, varTime)
         sData.(varTime) = sData.(varTime)(indTimeUse);
     end

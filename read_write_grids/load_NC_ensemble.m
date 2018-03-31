@@ -52,8 +52,13 @@ for kk = 1 : nMem
             error('GISSCompare:unknownVar',['Variable ' varOut ' is not expected to require loading multiple variables.']);
         end
     else
-        sData{kk} = read_geodata_v2(pathLd{kk}, varOut, lonUse, latUse, yrsLd, fr, crop, 'units', 'standard', 'no_disp');
-        sData{kk} = struct_2_standard_units(sData{kk}, varOut, sData{kk}.timestep);
+        sData{kk} = read_geodata_v2(pathLd{kk}, varLd, lonUse, latUse, yrsLd, fr, crop, 'units', 'standard', 'no_disp');
+        sData{kk} = struct_2_standard_units(sData{kk}, varLd, sData{kk}.timestep);
+        
+        if ~isequal(varLd, varOut)
+            sData{kk}.(varOut) = sData{kk}.(varLd);
+            sData{kk} = rmfield(sData{kk}, varLd);
+        end
     end
     
     if blWgt == 1

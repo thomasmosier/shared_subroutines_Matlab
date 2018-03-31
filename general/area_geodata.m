@@ -19,7 +19,7 @@
 % <http://www.gnu.org/licenses/>.
 
 
-function area = area_geodata(lon,lat,sTyp)
+function area = area_geodata(lon,lat,strTyp)
 
 
 
@@ -45,7 +45,7 @@ if any(size(lon) == 1)
 end
 
 
-if nargin == 2 || isempty(sTyp) || regexpbl(sTyp,'c')
+if nargin == 2 || isempty(strTyp) || regexpbl(strTyp,'c')
     %Calculate half the difference 
     if numel(lat) > 1
         dLat = 0.5*diff(lat,1,1);
@@ -91,7 +91,7 @@ if nargin == 2 || isempty(sTyp) || regexpbl(sTyp,'c')
     else
        error('area_Geodata:lon','The longitudes in the geo-referenced dataset are repeated.') 
     end
-elseif ~isempty(regexpi(sTyp,'e'))
+elseif ~isempty(regexpi(strTyp,'e'))
     latBN = lat(1:end-1);
     latBS = lat(2:end);
     lonBW = lon(1:end-1);
