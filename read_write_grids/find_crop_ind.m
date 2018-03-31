@@ -1,11 +1,16 @@
 function [indLonGp, indLatGp] = find_crop_ind(lonGrid, latGrid, lonBnds, latBnds, fr, type)
 
 
+nDec = -order(mean([abs(diff(lonGrid(:))); abs(diff(latGrid(:)))])) + 2;
+
 %Ensure lon and lat bounds are in correct order:
-lonMin = min(lonBnds(:));
-lonMax = max(lonBnds(:));
-latMin = min(latBnds(:));
-latMax = max(latBnds(:));
+lonMin = round2(min(lonBnds(:)), nDec);
+lonMax = round2(max(lonBnds(:)), nDec);
+latMin = round2(min(latBnds(:)), nDec);
+latMax = round2(max(latBnds(:)), nDec);
+
+lonGrid = round2(lonGrid, nDec);
+latGrid = round2(latGrid, nDec);
 
 if strcmpi(type, 'in')
     indLonW = find(lonMin <= lonGrid, 1, 'first');
