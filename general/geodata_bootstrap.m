@@ -69,7 +69,6 @@ if ~isempty(nRunning)
     end
     
     nTime = numel(datesLp(:,1));
-    
     nStep = ceil(nRunning/2 - 1);
     
     %Initialize outputs:
@@ -111,7 +110,7 @@ else
     blClose = 0;
 end
 
-keyboard
+
 parfor ll = 1 : numel(indUse)
     rCurr = rUse(ll);
     cCurr = cUse(ll);

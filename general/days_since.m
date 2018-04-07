@@ -37,6 +37,11 @@ function nDays = days_since(startVec, endVec, strCal)
 %Output:
 %'nDays' = number of days between dates (i.e. difference between dates)
 
+if numel(endVec(1,:)) == 0
+    nDays = nan([numel(endVec(:,1)), 1]);
+    return
+end
+
 nDec = nan; %Used for rounding at end
 %If inputs nan, return nan
 if all(all(isnan(endVec))) || all(all(isnan(startVec)))
