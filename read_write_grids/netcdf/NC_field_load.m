@@ -95,7 +95,9 @@ else
                         sortDim(ii) = jj;
                     end
                 end
+                clear jj
             end
+            clear ii
         end
     else %isempty(dimNC)
         error('NC_data_use:wrongVar','The variable provided the function is not correct.');
@@ -109,6 +111,7 @@ else
            blDimOrd = 0; 
         end
     end
+    clear ii
 
 
     if blDimOrd == 0 %Dimensions must be out of order! Caused by person who made NetCDF file... :(
@@ -168,6 +171,7 @@ else
                     break
                 end
             end 
+            clear ii
         end
 
         dataSz = ncinfo(path, nmData);
@@ -190,6 +194,7 @@ else
                 varSz(ii) = dataSzTemp(2);
             end
         end
+        clear ii
 
 
         %If dimensions not ordered, reorder:
@@ -200,7 +205,9 @@ else
                         sortDim(ii) = jj;
                     end
                 end
+                clear jj
             end
+            clear ii
         end
     end
 
@@ -239,15 +246,18 @@ else
                 for ii = 1 : numel(indD{sortDim(1)})
                     dataLd(ii,:,:) = single(ncread(path, nmData, [indD{sortDim(1)}(ii), indD{sortDim(2)}(1), indD{sortDim(3)}(1)], [1, numel(indD{sortDim(2)}), numel(indD{sortDim(3)})]));
                 end
+                clear ii
             end
         elseif ld(2) == 1
             for ii = 1 : numel(indD{sortDim(2)})
                 dataLd(:,ii,:) = single(ncread(path, nmData, [indD{sortDim(1)}(1), indD{sortDim(2)}(ii), indD{sortDim(3)}(1)], [numel(indD{sortDim(1)}), 1, numel(indD{sortDim(3)})]));
             end
+            clear ii
         elseif ld(3) == 1
             for ii = 1 : numel(indD{sortDim(3)})
                 dataLd(:,:,ii) = single(ncread(path, nmData, [indD{sortDim(1)}(1), indD{sortDim(2)}(1), indD{sortDim(3)}(ii)], [numel(indD{sortDim(1)}), numel(indD{sortDim(2)}), 1]));
             end
+            clear ii
         end
 
     elseif sum(ld) > 1
@@ -261,7 +271,9 @@ else
                     dataLd(ii,jj,kk) = single(ncread(path, nmData, vecCurr(sortDim), [1, 1, 1]));
                 end
             end
+            clear jj
         end
+        clear ii
         sortDim = (1:3);
     end
 
