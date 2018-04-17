@@ -3,6 +3,19 @@ function sData = geodata_time_crop(sData, varOut, yrs, mnths)
 varDate = 'date';
 varTime = 'time';
 
+if isempty(yrs) || all(isnan(yrs))
+    yrs = [-1, 1]*10^6;
+elseif isnan(yrs(1))
+    yrs(1) = -10^6;
+elseif isnan(yrs(2))
+   yrs(2) = 10^6;
+end
+
+if isempty(mnths) || all(isnan(mnths))
+    mnths = (1:12);
+end
+
+
 if iscell(sData)
     for kk = 1 : numel(sData(:))
         nDim = ndims(sData{kk}.(varOut));
