@@ -14,20 +14,33 @@ nTs = numel(clLgd);
 refLn = [];
 tsClr = [];
 path = [];
+yLab = [];
+xLab = [];
+ciType = 'err';
 if numel(varargin(:)) > nTs*3
-    for ii = nTs*2 + 1 : numel(varargin(:))
+    for ii = nTs*3 + 1 : numel(varargin(:))
         if strcmpi(varargin{ii}, 'line')
-            refLn = varargin{ii}+1;
+            refLn = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'color')
-            tsClr = varargin{ii}+1;
-       elseif strcmpi(varargin{ii}, 'path')
+            tsClr = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'path')
            path = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'ylab')
+            yLab = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'xlab')
+            xLab = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'citype')
+            ciType = varargin{ii+1};
         end
     end
 end
 
 if isempty(tsClr)
     tsClr = distinguishable_colors(nTs);
+else
+    if numel(tsClr(:,1)) ~= nTs 
+        error('plotTsCi:clrNumber','The number of colors provided does not match the number of time-series detected.')
+    end
 end
 
 xMn = 10^6;
@@ -44,20 +57,38 @@ hold on
 %Plot confidence intervals first:
 hCI = nan(nTs, 1);
 for ii = 1 : nTs
-    ciCurr = varargin{2+3*(ii-1)} + repmat(varargin{1+3*(ii-1)}, [1,2]);
-    hCI(ii) = ciplot(ciCurr(:,1), ciCurr(:,2), varargin{3+3*(ii-1)}, tsClr(ii,:));
-    alpha(hCI(ii), 0.2);
-    
-    yMn = min(yMn, min(ciCurr(:,1)));
-    yMx = max(yMx, max(ciCurr(:,2)));
-    xMn = min(xMn, min(varargin{3+3*(ii-1)}(:)));
-    xMx = max(xMx, max(varargin{3+3*(ii-1)}(:)));
+    if ~isempty(varargin{2+3*(ii-1)})
+        if strcmpi(ciType, 'err')
+            ciCurr = varargin{2+3*(ii-1)} + repmat(varargin{1+3*(ii-1)}, [1,2]);
+        elseif strcmpi(ciType, 'abs')
+            ciCurr = varargin{2+3*(ii-1)};
+        else
+            error('plotTsCi:unknownCiType',['The confidence interval type ' ciType ' is unknwown.']);
+        end
+        
+        
+        hCI(ii) = ciplot(ciCurr(:,1), ciCurr(:,2), varargin{3+3*(ii-1)}, tsClr(ii,:));
+        
+        alpha(hCI(ii), 0.2);
+        
+        yMn = min(yMn, min(ciCurr(:,1)));
+        yMx = max(yMx, max(ciCurr(:,2)));
+    end
 end
+
+hCI(isnan(hCI)) = [];
 
 %Plot mean projection lines:
 hTs = nan(nTs,1);
 for ii = 1 : nTs
-    hTs(ii) = plot(varargin{3+3*(ii-1)}, varargin{1+3*(ii-1)},'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+    tsCurr = varargin{1+3*(ii-1)};
+    hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+    
+    yMn = min(yMn, min(tsCurr));
+    yMx = max(yMx, max(tsCurr));
+    
+    xMn = min(xMn, min(varargin{3+3*(ii-1)}(:)));
+    xMx = max(xMx, max(varargin{3+3*(ii-1)}(:)));
 end
 
 if ~isempty(refLn)
@@ -70,7 +101,25 @@ end
 
 hold off
 
-hLgd = legend(hTs, clLgd, 'Location','northwest');
+%Check to see if there are legend entries for all inputs:
+hLgd = [];
+if numel(clLgd(:)) == numel(hTs(:))
+    hTsLgd = hTs;
+    for ii = numel(hTs(:)) : -1 : 1
+        if isempty(clLgd{ii})
+            clLgd(ii) = [];
+            hTsLgd(ii) = [];
+        end
+    end
+    
+    if ~isempty(hTsLgd)
+        hLgd = legend(hTsLgd, clLgd, 'Location','northwest');
+    end
+else
+    warning('plotTsCi:diffNumTsLgd',['There are ' num2str(numel(hTs(:))) ...
+        ' time-series and ' num2str(numel(clLgd(:))) ' legend entries. '...
+        'A legend is not being produced because the numbers do not match.']);
+end
 
 if isfield(sPlot, 'ylabel')
     hYLab = ylabel(sPlot.ylabel);
@@ -104,6 +153,16 @@ end
 xlim([xMn, xMx]);
 ylim([0.97*yMn, yScl*yMx]);
 
+if ~isempty(yLab)
+    hYLab = ylabel(yLab);
+else
+    hYLab = [];
+end
+if ~isempty(xLab)
+    hXLab = xlabel(xLab);
+else
+    hXLab = [];
+end
 
 % for kk = 1 : nSce
 %     if kk == 1
@@ -121,11 +180,25 @@ ylim([0.97*yMn, yScl*yMx]);
 %Set figure properties:
 set(hTs, ...
     'LineWidth', sPlot.lnwd);
-set(hCI,...
-    'linestyle', 'none');
-set(hLgd, ...
-    'FontSize'   , sPlot.ftsz, ...
-    'LineWidth', sPlot.axlnwd);
+if ~isempty(hCI)
+    set(hCI,...
+        'linestyle', 'none');
+end
+if ~isempty(hLgd)
+    set(hLgd, ...
+        'FontSize'   , sPlot.ftsz, ...
+        'LineWidth', sPlot.axlnwd);
+end
+if ~isempty(xLab)
+    set(hXLab, ...
+        'FontSize'   , sPlot.ftsz, ...
+        'LineWidth', sPlot.axlnwd);
+end
+if ~isempty(yLab)
+    set(hYLab, ...
+        'FontSize'   , sPlot.ftsz, ...
+        'LineWidth', sPlot.axlnwd);
+end
 set(gca, ...
     'Box'         , 'off', ...
     'TickDir'     , 'out'     , ...

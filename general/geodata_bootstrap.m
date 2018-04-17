@@ -79,7 +79,7 @@ if ~isempty(nRunning)
     runAvgTemp = nan([nTime, numel(indUse)]);
     ciRunningTemp = nan([2, nTime, numel(indUse)], 'single');
 else
-    nTime = nan;
+    nTime = 0;
     nStep = nan;
     
     %Initialize outputs:
@@ -116,8 +116,6 @@ parfor ll = 1 : numel(indUse)
     cCurr = cUse(ll);
 
     if ~isempty(nRunning)
-        btDataTemp = nan([nBt, nTime], 'single');
-        
         dataTemp = nan([nTime, nMem], 'single');
         for mm = 1 : nMem
             indT = find(ismember(sData{mm}.(varDate), datesLp, 'rows'));
@@ -138,12 +136,14 @@ parfor ll = 1 : numel(indUse)
         
         %Calculate bootstrapped confidence intervals for each time:    
         for zz = 1 : nTime
+            btDataTemp = nan([nBt, 1], 'single');
+            
             indT = [max(zz - nStep, 1), min(zz + nStep, nTime)];
             %Loop over bootstrap iterations:
             for mm = 1 : nBt
                 %Keep only bootstrapped mean
                 if strcmpi(type, 'stationary')
-                    btDataTemp(mm) = mean(stationaryBB(detrend(dataTemp(indT(1):indT(2),indData(mm))), 1, nBlkSz(mm)));
+                    btDataTemp(mm) = runAvgCurr(zz,indData(mm)) + mean(stationaryBB(detrend(dataTemp(indT(1):indT(2),indData(mm))), 1, nBlkSz(mm)));
                 else
                     error('geodataBootstrap:unknownType',['Type ' type ' has not been programmed for.']);
                 end
