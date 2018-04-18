@@ -123,6 +123,12 @@ end
 
 
 %Create 'sMeta' struct, used in lat/lon indice functions
+if isempty(lonBnds)
+   lonBnds = nan(1,2); 
+end
+if isempty(latBnds)
+   latBnds = nan(1,2); 
+end
 sMeta.crd = [sort(lonBnds(:)'), sort(latBnds(:)')];
 if all(isnan(sMeta.crd))
     sMeta.crd = nan(1,4);
