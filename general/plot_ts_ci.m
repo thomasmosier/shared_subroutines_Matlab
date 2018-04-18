@@ -17,9 +17,10 @@ path = [];
 yLab = [];
 xLab = [];
 ciType = 'err';
+lineSpec = [];
 if numel(varargin(:)) > nTs*3
     for ii = nTs*3 + 1 : numel(varargin(:))
-        if strcmpi(varargin{ii}, 'line')
+        if strcmpi(varargin{ii}, 'refline')
             refLn = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'color')
             tsClr = varargin{ii+1};
@@ -31,6 +32,8 @@ if numel(varargin(:)) > nTs*3
             xLab = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'citype')
             ciType = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'linespec')
+            lineSpec = varargin{ii+1};
         end
     end
 end
@@ -78,11 +81,28 @@ end
 
 hCI(isnan(hCI)) = [];
 
+if ~isempty(lineSpec)
+    if ~iscell(lineSpec)
+        lineSpec = {lineSpec};
+    end
+    
+    if numel(lineSpec) == 1
+        lineSpec = repmat(lineSpec, nTs, 1);
+    elseif ~numel(lineSpec) == nTs
+        error('plotTsCi:nLineSpec', ['The line specification has ' num2str(numel(lineSpec)) ' entries, but there are ' num2str(nTs) ' lines to plot.'])
+    end
+end
+
 %Plot mean projection lines:
 hTs = nan(nTs,1);
 for ii = 1 : nTs
     tsCurr = varargin{1+3*(ii-1)};
-    hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+    
+    if ~isempty(lineSpec)
+        hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd, 'lineSpec', lineSpec{ii});
+    else
+        hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+    end
     
     yMn = min(yMn, min(tsCurr));
     yMx = max(yMx, max(tsCurr));
