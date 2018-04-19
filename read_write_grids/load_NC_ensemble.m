@@ -3,14 +3,21 @@ function sData = load_NC_ensemble(pathLd, varLd, varOut, lonUse, latUse, yrsLd, 
 blWgt = 0;
 lonWgt = [];
 latWgt = [];
+timeStepUse = [];
+varTStep = [];
 for ii = 1 : numel(varargin(:))
     if regexpbl(varargin{ii}, {'area', 'wgt'}, 'and')
         blWgt = 1;
         lonWgt = varargin{ii+1};
         latWgt = varargin{ii+2};
+    elseif regexpbl(varargin{ii}, {'time', 'step'}, 'and')
+        timeStepUse = varargin{ii+1};
+        varTStep  = varargin{ii+2};
     end
 end
 clear ii
+
+varDate = 'date';
 
 if ischar(pathLd)
     pathLd = {pathLd};
@@ -36,6 +43,10 @@ for kk = 1 : nMem
         for ll = 1 : numel(varLd(:))
             sDataTemp{ll} = read_geodata_v2(pathLd{ll}{kk}, varLd{ll}, lonUse, latUse, yrsLd, fr, crop, 'units', 'standard', 'no_disp');
             sDataTemp{ll} = struct_2_standard_units(sDataTemp{ll}, varLd{ll}, sDataTemp{ll}.timestep);
+            
+            if ~isempty(timeStepUse)
+                sDataTemp{ll} = geodata_timestep_convert(sDataTemp{ll}, varLd{ll}, sDataTemp{ll}.(varTStep), timeStepUse, varDate);
+            end
         end
         clear ll
 
@@ -58,6 +69,10 @@ for kk = 1 : nMem
         if ~isequal(varLd, varOut)
             sData{kk}.(varOut) = sData{kk}.(varLd);
             sData{kk} = rmfield(sData{kk}, varLd);
+        end
+        
+        if ~isempty(timeStepUse)
+            sData{kk} = geodata_timestep_convert(sData{kk}, varOut, sData{kk}.(varTStep), timeStepUse, varDate);
         end
     end
     
