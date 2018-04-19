@@ -37,7 +37,7 @@ sData = cell(nMem, 1);
 for kk = 1 : nMem
     disp(['Loading ensemble member ' num2str(kk) ' of ' num2str(nMem) '.']);
     
-    if iscell(pathLd{kk})
+    if iscell(pathLd{1}) %Check first ensemble member here
         sDataTemp = cell(numel(varLd));
 
         for ll = 1 : numel(varLd(:))
