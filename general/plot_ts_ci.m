@@ -98,11 +98,12 @@ hTs = nan(nTs,1);
 for ii = 1 : nTs
     tsCurr = varargin{1+3*(ii-1)};
     
-    if ~isempty(lineSpec)
-        hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd, 'lineSpec', lineSpec{ii});
-    else
-        hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
-    end
+    hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+%     if ~isempty(lineSpec)
+%         hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd, 'lineSpec', lineSpec{ii});
+%     else
+%         hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+%     end
     
     yMn = min(yMn, min(tsCurr));
     yMx = max(yMx, max(tsCurr));
