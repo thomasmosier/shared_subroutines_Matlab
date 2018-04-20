@@ -10,7 +10,7 @@ for ii = 1 : numel(varargin(:))
         blWgt = 1;
         lonWgt = varargin{ii+1};
         latWgt = varargin{ii+2};
-    elseif regexpbl(varargin{ii}, {'ttime', 'convert'}, 'and')
+    elseif regexpbl(varargin{ii}, {'time', 'convert'}, 'and')
         timeStepUse = varargin{ii+1};
         varTStep  = varargin{ii+2};
     end
@@ -35,8 +35,6 @@ sData = cell(nMem, 1);
 
 %Loop over input paths
 for kk = 1 : nMem
-    
-    
     if iscell(pathLd{1}) %Check first ensemble member here
         sDataTemp = cell(numel(varLd));
 
@@ -59,12 +57,16 @@ for kk = 1 : nMem
             elseif regexpbl(varLd{2}, 'tasmax') && regexpbl(varLd{1}, 'tasmin') 
                 sData{kk}.(varOut) = sDataTemp{2}.(varLd{2}) - sDataTemp{1}.(varLd{1});
             else
-                error('GISSCompare:unknownDtempVar','The variables programmed for dtemp do not seem correct.')
+                error('loadNcEnsemble:unknownDtempVar','The variables programmed for dtemp do not seem correct.')
             end
         else
-            error('GISSCompare:unknownVar',['Variable ' varOut ' is not expected to require loading multiple variables.']);
+            error('loadNcEnsemble:unknownVar',['Variable ' varOut ' is not expected to require loading multiple variables.']);
         end
     else
+        if iscell(varLd)
+            error('loadNcEnsemble:multVar','Multiple input variables selected to load, but format of file paths is not correct to support loading multiple variables.')
+        end
+        
         disp(['Loading ensemble member ' num2str(kk) ' of ' num2str(nMem) '.']);
 
         sData{kk} = read_geodata_v2(pathLd{kk}, varLd, lonUse, latUse, yrsLd, fr, crop, 'units', 'standard', 'no_disp');

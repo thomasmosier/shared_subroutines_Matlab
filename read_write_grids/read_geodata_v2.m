@@ -368,6 +368,10 @@ if regexpbl(units, 'standard')
     if isfield(sData,['att' varLd])
         %Find timestep:
         if isfield(sData, 'date')
+            if isempty(sData.date)
+                error('readGeodata:emptyDate','The date vector is empty. This is likely because the file did not contain the requested dates.')
+            end
+            
             if all(ismember(sData.('date')(:,2), mnthsLd) ~= 0) && (numel(sData.('date')(1,:)) == 2 || sum(mode(sData.('date')(:,3)) == sData.('date')(:,3)) > 0.5*numel(sData.('time')))
                 sData.timestep = 'monthly';
             elseif mode(abs(diff(sData.date(:,3)))) == 1 && (numel(sData.('date')(1,:)) == 3 || (numel(sData.('date')(1,:)) > 3 && mode(abs(diff(sData.date(:,4)))) == 0) )
@@ -376,6 +380,10 @@ if regexpbl(units, 'standard')
                 sData.timestep = 'unknown';
             end
         elseif isfield(sData, 'time')
+            if isempty(sData.time)
+                error('readGeodata:emptyTime','The time vector is empty. This is likely because the file did not contain the requested dates.')
+            end
+            
             avgDiff = mode(diff(sort(sData.time)));
 
     %         avgDiff = nanmean(diff(sort(sData.time)));
