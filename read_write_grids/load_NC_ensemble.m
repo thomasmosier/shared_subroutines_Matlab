@@ -10,7 +10,7 @@ for ii = 1 : numel(varargin(:))
         blWgt = 1;
         lonWgt = varargin{ii+1};
         latWgt = varargin{ii+2};
-    elseif regexpbl(varargin{ii}, {'time', 'step'}, 'and')
+    elseif regexpbl(varargin{ii}, {'ttime', 'convert'}, 'and')
         timeStepUse = varargin{ii+1};
         varTStep  = varargin{ii+2};
     end
@@ -35,12 +35,14 @@ sData = cell(nMem, 1);
 
 %Loop over input paths
 for kk = 1 : nMem
-    disp(['Loading ensemble member ' num2str(kk) ' of ' num2str(nMem) '.']);
+    
     
     if iscell(pathLd{1}) %Check first ensemble member here
         sDataTemp = cell(numel(varLd));
 
         for ll = 1 : numel(varLd(:))
+            disp(['Loading ensemble member ' num2str(kk) ' of ' num2str(nMem) ' (variable ' num2str(ll) ' of ' num2str(numel(varLd(:))) ').']);
+
             sDataTemp{ll} = read_geodata_v2(pathLd{ll}{kk}, varLd{ll}, lonUse, latUse, yrsLd, fr, crop, 'units', 'standard', 'no_disp');
             sDataTemp{ll} = struct_2_standard_units(sDataTemp{ll}, varLd{ll}, sDataTemp{ll}.timestep);
             
@@ -63,6 +65,8 @@ for kk = 1 : nMem
             error('GISSCompare:unknownVar',['Variable ' varOut ' is not expected to require loading multiple variables.']);
         end
     else
+        disp(['Loading ensemble member ' num2str(kk) ' of ' num2str(nMem) '.']);
+
         sData{kk} = read_geodata_v2(pathLd{kk}, varLd, lonUse, latUse, yrsLd, fr, crop, 'units', 'standard', 'no_disp');
         sData{kk} = struct_2_standard_units(sData{kk}, varLd, sData{kk}.timestep);
         
