@@ -1,8 +1,8 @@
-function sData = geodata_timestep_convert(sData, var, tstepData, tstepOut, varDate)
+function sData = geodata_timestep_convert(sData, var, tStepData, tStepOut, varDate)
 
 varTstep = 'timestep';
 
-if regexpbl(tstepOut, 'month') && regexpbl(tstepData, {'day', 'daily'})
+if regexpbl(tStepOut, 'month') && regexpbl(tStepData, {'day', 'daily'})
     type = 'avg';
     if strcmpi(var, 'pr') || strcmpi(var, 'pre') 
     %             type = 'sum';
@@ -20,11 +20,11 @@ if regexpbl(tstepOut, 'month') && regexpbl(tstepData, {'day', 'daily'})
 
     if iscell(sData)
         for kk = 1 : numel(sData(:))
-            if regexpbl(tstepData, {'day','daily'})
+            if regexpbl(tStepData, {'day','daily'})
                 sData{kk} = geodata_day2month(sData{kk}, var, type);
                 
                 sData{kk}.(['att' varUnitsIn]) = set_att(sData{kk}.(['att' varUnitsIn]), 'units', unitsOut);
-            elseif regexpbl(tstepData, 'month')
+            elseif regexpbl(tStepData, 'month')
                 unitsCurr = find_att(sData{kk}.(['att' varUnitsIn]), 'units');
 
                 if regexpbl(unitsCurr, 'mm/month')
@@ -35,16 +35,16 @@ if regexpbl(tstepOut, 'month') && regexpbl(tstepData, {'day', 'daily'})
                 end
             end
             
-            sData{kk}.(varTstep) = tstepOut;
+            sData{kk}.(varTstep) = tStepOut;
         end
         clear kk
     elseif isstruct(sData)
-        if regexpbl(tstepData, {'day','daily'})
+        if regexpbl(tStepData, {'day','daily'})
             sData = geodata_day2month(sData, var, type);
-            sData.(varTstep) = tStepUse;
+            sData.(varTstep) = tStepOut;
 
             sData.(['att' varUnitsIn]) = set_att(sData.(['att' varUnitsIn]), 'units', unitsOut);
-        elseif regexpbl(tstepData, 'month')
+        elseif regexpbl(tStepData, 'month')
             unitsCurr = find_att(sData.(['att' varUnitsIn]), 'units');
 
             if regexpbl(unitsCurr, 'mm/month')
@@ -55,14 +55,14 @@ if regexpbl(tstepOut, 'month') && regexpbl(tstepData, {'day', 'daily'})
             end
         end
 
-        sData.(varTstep) = tstepOut;
+        sData.(varTstep) = tStepOut;
     else
-        
+        error('geodataTimestepConvert:unknownInputFormat', ['The input format ' class(sData) ' has not been programmed for.']);
     end
-elseif ~isequal(tstepOut, tstepData)
+elseif ~isequal(tStepOut, tStepData)
     error('geodataTimestepConvert:unknownTimestepCombo', ...
         ['The timesetp combo of input = ' ...
-        tstepData ' and desired output = ' tstepOut ...
+        tStepData ' and desired output = ' tStepOut ...
         ' has not been programmed for.']);
 end
     
