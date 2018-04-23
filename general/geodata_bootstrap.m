@@ -110,6 +110,7 @@ else
     blClose = 0;
 end
 
+typMean = 'mean'; %Edge or mean
 
 parfor ll = 1 : numel(indUse)
     rCurr = rUse(ll);
@@ -130,7 +131,7 @@ parfor ll = 1 : numel(indUse)
         %ensemble members
         runAvgCurr = nan([nTime, nMem], 'single');
         for mm = 1 : nMem
-            runAvgCurr(:,mm) = runmean(dataTemp(:,mm), nStep, [], 'mean');
+            runAvgCurr(:,mm) = runmean(dataTemp(:,mm), nStep, [], typMean);
         end
         runAvgTemp(:,ll) = nanmean(runAvgCurr, 2);
         
