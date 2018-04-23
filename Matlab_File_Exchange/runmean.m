@@ -1,4 +1,4 @@
-function Y = runmean(X, m, dim, modestr) ;
+function Y = runmean(X, m, dim, modestr)
 % RUNMEAN - Very fast running mean (aka moving average) filter
 %   For vectors, Y = RUNMEAN(X,M) computes a running mean (also known as
 %   moving average) on the elements of the vector X. It uses a window of
@@ -20,6 +20,8 @@ function Y = runmean(X, m, dim, modestr) ;
 %                 DIM (default)
 %     'zero'    : X is padded with zeros
 %     'mean'    : X is padded with the mean along dimension DIM 
+%     'ext'     : X is padded with the mean of the first and last m
+%                 elements, respectively
 %
 %   X should not contains NaNs, yielding an all NaN result. NaNs can be
 %   replaced by using, e.g., "inpaint_nans" created by John D'Errico.
@@ -62,7 +64,7 @@ function Y = runmean(X, m, dim, modestr) ;
 % Acknowledgements: (sep 2006) Thanks to Markus Hahn for the idea of
 % working in multi-dimensions and the way to treat edges. 
 
-error(nargchk(2,4,nargin)) ;
+narginchk(2,4);
 
 if ~isnumeric(m) || (numel(m) ~= 1) || (m < 0) || fix(m) ~= m,
     error('The window size (M) should be a positive integer') ;
@@ -84,7 +86,7 @@ end
 modestr = lower(modestr) ;
 
 % check mode specifier
-if ~ismember(modestr,{'edge','zero','mean'}),
+if ~ismember(modestr,{'edge','zero','mean', 'ext'}),
     error('Unknown mode') ;
 end
 
@@ -125,6 +127,9 @@ else
                 % pad with the average
                 Xfirst = repmat(mean(X,1),m,1) ;
                 Xlast = Xfirst ;
+            case 'ext'
+                Xfirst = repmat(mean(X(1:m),1),m,1);
+                Xlast  = repmat(mean(X(end-m+1:end),1),m,1);
         end        
         % pad the array
         Y = [zeros(1,size(X,2)) ; Xfirst ; X ; Xlast] ;       
