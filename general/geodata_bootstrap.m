@@ -4,6 +4,8 @@ varDate = 'date';
 indUse = [];
 nRunning = [];
 parClose = 1;
+typPad = 'ext'; %Edge or mean
+
 if ~isempty(varargin)
     for ii = 1 : numel(varargin(:))
         if strcmpi(varargin{ii}, 'ind')
@@ -12,6 +14,8 @@ if ~isempty(varargin)
             nRunning = varargin{ii+1};
         elseif regexpbl(varargin{ii}, {'par', 'close'}, 'and')
             parClose = varargin{ii+1};
+        elseif regexpbl(varargin{ii}, {'pad', 'method'}, 'and')
+            typPad = varargin{ii+1};
         end
     end
 end
@@ -110,8 +114,6 @@ else
     blClose = 0;
 end
 
-typMean = 'mean'; %Edge or mean
-
 parfor ll = 1 : numel(indUse)
     rCurr = rUse(ll);
     cCurr = cUse(ll);
@@ -131,7 +133,7 @@ parfor ll = 1 : numel(indUse)
         %ensemble members
         runAvgCurr = nan([nTime, nMem], 'single');
         for mm = 1 : nMem
-            runAvgCurr(:,mm) = runmean(dataTemp(:,mm), nStep, [], typMean);
+            runAvgCurr(:,mm) = runmean(dataTemp(:,mm), nStep, [], typPad);
         end
         runAvgTemp(:,ll) = nanmean(runAvgCurr, 2);
         
