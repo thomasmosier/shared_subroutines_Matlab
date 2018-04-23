@@ -1,4 +1,4 @@
-function sData = geodata_time_crop(sData, varOut, yrs, mnths)
+function [sData, varargout] = geodata_time_crop(sData, varOut, yrs, mnths)
 
 varDate = 'date';
 varTime = 'time';
@@ -16,28 +16,42 @@ if isempty(mnths) || all(isnan(mnths))
 end
 
 
+
 if iscell(sData)
+    indTimeUse = cell(numel(numel(sData(:))), 1);
     for kk = 1 : numel(sData(:))
         nDim = ndims(sData{kk}.(varOut));
-        indTimeUse = intersect( ...
-            find(ismember(sData{kk}.(varDate)(:,2), mnths) == 1), ...
-            find(sData{kk}.(varDate)(:,1) >= min(yrs) & sData{kk}.(varDate)(:,1) <= max(yrs)));
-
-        sData{kk}.(varDate) = sData{kk}.(varDate)(indTimeUse,:);
-        if nDim == 3
-            sData{kk}.(varOut) 	= sData{kk}.(varOut )(indTimeUse,:,:);
+        if numel(sData{kk}.(varDate)(1,:)) > 1
+            indTimeUse{kk} = intersect( ...
+                find(ismember(sData{kk}.(varDate)(:,2), mnths) == 1), ...
+                find(sData{kk}.(varDate)(:,1) >= min(yrs) & sData{kk}.(varDate)(:,1) <= max(yrs)));
+        elseif numel(sData{kk}.(varDate)(1,:)) == 1
+            indTimeUse{kk} = find(sData{kk}.(varDate)(:,1) >= min(yrs) & sData{kk}.(varDate)(:,1) <= max(yrs));
         else
-            sData{kk}.(varOut) 	= sData{kk}.(varOut )(indTimeUse,:);
+            error('geodataTimeCrop:date', ['The date vector has precision ' num2str(numel(sData{kk}.(varDate)(1,:))) ', which is not expected.'])
+        end
+
+        sData{kk}.(varDate) = sData{kk}.(varDate)(indTimeUse{kk},:);
+        if nDim == 3
+            sData{kk}.(varOut) 	= sData{kk}.(varOut )(indTimeUse{kk},:,:);
+        else
+            sData{kk}.(varOut) 	= sData{kk}.(varOut )(indTimeUse{kk},:);
         end
         if isfield(sData{kk}, varTime)
-            sData{kk}.(varTime) = sData{kk}.(varTime)(indTimeUse);
+            sData{kk}.(varTime) = sData{kk}.(varTime)(indTimeUse{kk});
         end
     end
     clear kk
 elseif isstruct(sData)
-    indTimeUse = intersect( ...
-        find(ismember(sData.(varDate)(:,2), mnths) == 1), ...
-        find(sData.(varDate)(:,1) >= min(yrs) & sData.(varDate)(:,1) <= max(yrs)));
+    if numel(sData.(varDate)(1,:)) > 1
+        indTimeUse = intersect( ...
+            find(ismember(sData.(varDate)(:,2), mnths) == 1), ...
+            find(sData.(varDate)(:,1) >= min(yrs) & sData.(varDate)(:,1) <= max(yrs)));
+    elseif numel(sData.(varDate)(1,:)) == 1
+        indTimeUse = find(sData.(varDate)(:,1) >= min(yrs) & sData.(varDate)(:,1) <= max(yrs));
+    else
+        error('geodataTimeCrop:date', ['The date vector has precision ' num2str(numel(sData.(varDate)(1,:))) ', which is not expected.'])
+    end
 
     sData.(varDate) = sData.(varDate)(indTimeUse,:);
     if ndims(sData.(varOut)) == 3
@@ -50,4 +64,8 @@ elseif isstruct(sData)
     end
 else
     error('geodataTime:unkownGeodataClass', ['The geodata class ' class(sData) ' has not been programmed for.'])
+end
+
+if nargout > 1
+    varargout{1} = indTimeUse;
 end

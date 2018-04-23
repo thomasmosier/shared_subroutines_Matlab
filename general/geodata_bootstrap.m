@@ -130,7 +130,7 @@ parfor ll = 1 : numel(indUse)
         %ensemble members
         runAvgCurr = nan([nTime, nMem], 'single');
         for mm = 1 : nMem
-            runAvgCurr(:,mm) = runmean(dataTemp(:,mm), nStep, [], 'edge');
+            runAvgCurr(:,mm) = runmean(dataTemp(:,mm), nStep, [], 'mean');
         end
         runAvgTemp(:,ll) = nanmean(runAvgCurr, 2);
         
