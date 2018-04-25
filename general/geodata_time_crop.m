@@ -1,7 +1,16 @@
-function [sData, varargout] = geodata_time_crop(sData, varOut, yrs, mnths)
+function [sData, varargout] = geodata_time_crop(sData, varOut, yrs, mnths, varargin)
 
 varDate = 'date';
 varTime = 'time';
+
+
+if ~isempty(varargin)
+    for ii = 1 : numel(varargin(:))
+        if strcmpi(varargin{ii}, 'vardate')
+            varDate = varargin{ii+1};
+        end
+    end
+end
 
 if isempty(yrs) || all(isnan(yrs))
     yrs = [-1, 1]*10^6;
