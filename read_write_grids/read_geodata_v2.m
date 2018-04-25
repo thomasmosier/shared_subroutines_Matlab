@@ -240,6 +240,10 @@ elseif regexpbl(pathData,'gpcc') && strcmpi(ext, 'gpcc')
     [filesUse, sData.(varDate)] = GPCC_file_find(pathData, yrsLd, mnthsLd);
         warning('on', 'GPCCFileFind:nWrong')
 
+    if numel(filesUse(:)) == 0
+        error('readGeodata:noGpccFiles', ['No GPCC files were found at ' pathData]);
+    end
+    
     for ii = 1 : length(filesUse(:))
         fileCurr = fullfile(pathData,filesUse{ii});
 
@@ -252,7 +256,7 @@ elseif regexpbl(pathData,'gpcc') && strcmpi(ext, 'gpcc')
 
     end
     sData.info = {'source','GPCC'};
-    
+
     [sData.(varLat), sData.(varLon)] = ESRI_hdr2geo(hdrESRI, metaESRI);
     
     %Set time variable:

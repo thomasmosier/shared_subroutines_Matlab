@@ -16,6 +16,8 @@ if ~isempty(varargin)
             parClose = varargin{ii+1};
         elseif regexpbl(varargin{ii}, {'pad', 'method'}, 'and')
             typPad = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'vardate')
+            varDate = varargin{ii+1};
         end
     end
 end
