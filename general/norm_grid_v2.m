@@ -7,7 +7,13 @@ dataCor = nan(size(dataOut));
 %Crop if lat/lon bounds provided (NOT NAN)
 if all(~isnan(latBnds)) && all(~isnan(lonBnds))
     indLatIn = find(latIn >= min(latBnds) & latIn <= max(latBnds));
+    if numel(indLatIn) == 1
+       indLatIn = [indLatIn, indLatIn]; 
+    end
     indLonIn = find(lonIn >= min(lonBnds) & lonIn <= max(lonBnds));
+    if numel(indLonIn) == 1
+       indLonIn = [indLonIn, indLonIn]; 
+    end
 
     [indLonInMesh, indLatInMesh] = meshgrid(indLonIn, indLatIn);
     indIn = sub2ind(size(dataIn), indLatInMesh(:), indLonInMesh(:));
@@ -35,7 +41,19 @@ else
     indOut = sub2ind(size(dataOut), indLatOutMesh(:), indLonOutMesh(:));
 end
 
-
+if numel(unique(lonIn)) < 2 || numel(unique(latIn)) < 2 
+    dataCor = dataIn;
+    wgtIn = 1;
+    wgtOut = 1;
+    
+    if ~strcmpi(strNorm, 'none')
+        warning('normGrid:crdBnds', 'The data grid is smaller than the reference grid in at least one direction. Therefore normalization cannot proceed. Weights set to 1.')
+    end
+    
+    return
+end
+    
+    
 %Find common lat/lon coordinates:
 edgLonIn  = box_edg(lonIn);
 edgLonOut = box_edg(lonOut);

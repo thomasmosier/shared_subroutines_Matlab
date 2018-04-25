@@ -116,6 +116,10 @@ if regexpbl(ext, 'nc')
                     if strcmpi(varFld{ii}, 'pr') || regexpbl(varFld{ii}, {'pre'})
                         varUse = varFld{ii};
                     end
+                    
+                    if isempty(varUse) && strcmpi(varFld{ii}, 'p')
+                        varUse = varFld{ii};
+                    end
                 elseif strcmpi(varLd, 'tmp')
                     if strcmpi(varFld{ii}, 'tas') || regexpbl(varFld{ii}, {'tav','tmean'})
                         varUse = varFld{ii};
@@ -136,7 +140,7 @@ if regexpbl(ext, 'nc')
             end
         end
         clear ii
-        
+
         if isempty(varUse)
            indUse = strcmpi(varFld, varLd);
            
