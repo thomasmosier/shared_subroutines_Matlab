@@ -5,6 +5,11 @@ lat = [];
 lon = [];
 path = [];
 box = [];
+latArr    = cell(0,1); 
+lonArr    = cell(0,1);
+magLatArr = cell(0,1);
+magLonArr = cell(0,1);
+clrArr    = cell(0,1);
 if ~isempty(varargin(:))
    for ii = 1 : numel(varargin(:)) 
        if strcmpi(varargin{ii}, 'ci')
@@ -17,6 +22,12 @@ if ~isempty(varargin(:))
            path = varargin{ii+1}; 
        elseif strcmpi(varargin{ii}, 'box')
            box = varargin{ii+1}; %[lonW, lonE, latS, latN]
+       elseif strcmpi(varargin{ii}, 'arrows')
+           latArr{end+1,1} = varargin{ii+1}; 
+           lonArr{end+1,1} = varargin{ii+2};
+           magLatArr{end+1,1} = varargin{ii+3};
+           magLonArr{end+1,1} = varargin{ii+4};
+           clrArr{end+1} = varargin{ii+5};
        end
    end
    clear ii
@@ -87,6 +98,15 @@ if ~isempty(ci)
         hatchfill(hLwCf(kk));
     end
 end
+
+%Plot arrows (if requested)
+if ~isempty(magLonArr) && ~isempty(magLatArr) && ~isempty(lonArr) && ~isempty(latArr)
+    nQuiv = numel(magLonArr(:));
+    for ii = 1 : nQuiv
+        quiver(lonArr{ii}, latArr{ii}, squeeze(magLonArr{ii}), squeeze(magLatArr{ii}), 'color',  clrArr{ii});
+    end
+end
+
 
 if ~isempty(box)
     if ~isempty(lat) || ~isempty(lon)
