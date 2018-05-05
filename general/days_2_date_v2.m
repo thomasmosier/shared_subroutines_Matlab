@@ -28,6 +28,12 @@ function [varargout] = days_2_date_v2(daysIn, dateRef, strCal)
 %Change strCal into numerical value defined in 'cal_class'
 blCal = cal_class(strCal);
 
+if any(isnan(dateRef))
+    warning('days2Date:unknwonRef','Function returning early because reference date contains nan values.');
+    varargout = nan([numel(daysIn), numel(dateRef)]);
+    return
+end
+    
 %Make row vector if column:
 if length(dateRef(:,1)) > 1 && length(dateRef(1,:)) == 1
     dateRef = dateRef';
@@ -41,9 +47,9 @@ if sum(size(daysIn)>1) >1
    error('days_2_date:daysMatrix',[char(39) 'DaysIn' char(39) ' must be vector, not matrix.']);
 end
 
-if any(daysIn < 0)
-   error('days2Date:negInput','Input days must be positive.') 
-end
+% if any(daysIn < 0)
+%    error('days2Date:negInput','Input days must be positive.') 
+% end
     
 %Initialize date output vector:
 nPrec = numel(dateRef(1,:));
