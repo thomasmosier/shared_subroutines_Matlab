@@ -21,4 +21,4 @@ if ~isfield(sData, timeField)
         timeField ', which is not present in the data structure.']);
 end
 
-date = days_2_date(sData.(timeField), gcmRef, cal);
+date = days_2_date_v2(sData.(timeField), gcmRef, cal);

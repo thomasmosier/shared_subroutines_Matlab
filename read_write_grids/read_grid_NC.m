@@ -57,14 +57,14 @@ for ii = 1 : numel(varLd)
                 end
                 %Find time offset from the reference date:
                 if regexpbl(tUnits, 'days since')
-                    sData.date = days_2_date(sData.time, gcmRef, strCal);
+                    sData.date = days_2_date_v2(sData.time, gcmRef, strCal);
                 elseif regexpbl(tUnits, 'Ka BP') && regexpbl(strCal,'noleap')
                     sData.date = time_kaBP_2_standard(sData.time,gcmRef,strCal);
                 elseif regexpbl(tUnits, 'hours since')
                     if numel(gcmRef) == 3
                         gcmRef = [gcmRef, 0];
                     end
-                    sData.date = days_2_date(sData.time/24, gcmRef, strCal);
+                    sData.date = days_2_date_v2(sData.time/24, gcmRef, strCal);
                 else
                     disp(['The GCM' char(39) 's time units are' tUntInfo '.']);
                     error('NC_time:unitsUnknown','No case has been written to deal with the current time units.');

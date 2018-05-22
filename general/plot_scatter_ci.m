@@ -1,4 +1,4 @@
-function plot_ts_ci(sPlot, clLgd, varargin)
+function plot_scatter_ci(sPlot, clLgd, varargin)
 
 %Time-series are input as set of 3 arrays:
 %(1) y-data (n by 1)
@@ -11,19 +11,22 @@ end
 
 nTs = numel(clLgd);
 
-refLn = [];
-tsClr = [];
+mrkrClr = [];
 path = [];
 yLab = [];
 xLab = [];
 ciType = 'err';
-lineSpec = [];
-if numel(varargin(:)) > nTs*3
-    for ii = nTs*3 + 1 : numel(varargin(:))
+refLn = {};
+mrkrSpec = [];
+mrkrSize = [];
+xLim = nan(2,1);
+yLim = nan(2,1);
+if numel(varargin(:)) > nTs*2
+    for ii = nTs*2 + 1 : numel(varargin(:))
         if strcmpi(varargin{ii}, 'refline')
             refLn = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'color')
-            tsClr = varargin{ii+1};
+            mrkrClr = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'path')
            path = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'ylab')
@@ -32,16 +35,22 @@ if numel(varargin(:)) > nTs*3
             xLab = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'citype')
             ciType = varargin{ii+1};
-        elseif strcmpi(varargin{ii}, 'linespec')
-            lineSpec = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'mrkrspec')
+            mrkrSpec = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'size')
+            mrkrSize = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'xlim')
+            xLim = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'ylim')
+            yLim = varargin{ii+1};
         end
     end
 end
 
-if isempty(tsClr)
-    tsClr = distinguishable_colors(nTs);
+if isempty(mrkrClr)
+    mrkrClr = distinguishable_colors(nTs);
 else
-    if numel(tsClr(:,1)) ~= nTs 
+    if numel(mrkrClr(:,1)) ~= nTs 
         error('plotTsCi:clrNumber','The number of colors provided does not match the number of time-series detected.')
     end
 end
@@ -57,75 +66,117 @@ set(0,'defaultfigurecolor',[1 1 1])
 whitebg([1,1,1])
 hold on
 
-%Plot confidence intervals first:
+%Plot error bars first:
 hCI = nan(nTs, 1);
 for ii = 1 : nTs
-    if ~isempty(varargin{2+3*(ii-1)})
-        if strcmpi(ciType, 'err')
-            ciCurr = varargin{2+3*(ii-1)} + repmat(varargin{1+3*(ii-1)}, [1,2]);
-        elseif strcmpi(ciType, 'abs')
-            ciCurr = varargin{2+3*(ii-1)};
-        else
-            error('plotTsCi:unknownCiType',['The confidence interval type ' ciType ' is unknwown.']);
-        end
-        
-        
-        hCI(ii) = ciplot(ciCurr(:,1), ciCurr(:,2), varargin{3+3*(ii-1)}, tsClr(ii,:));
-        
-        alpha(hCI(ii), 0.2);
-        
-        yMn = min(yMn, min(ciCurr(:,1)));
-        yMx = max(yMx, max(ciCurr(:,2)));
-    end
+%     if ~isempty(varargin{2+3*(ii-1)})
+%         if strcmpi(ciType, 'err')
+%             ciCurr = varargin{2+3*(ii-1)} + repmat(varargin{1+3*(ii-1)}, [1,2]);
+%         elseif strcmpi(ciType, 'abs')
+%             ciCurr = varargin{2+3*(ii-1)};
+%         else
+%             error('plotTsCi:unknownCiType',['The confidence interval type ' ciType ' is unknwown.']);
+%         end
+%         
+%         
+%         hCI(ii) = ciplot(ciCurr(:,1), ciCurr(:,2), varargin{3+3*(ii-1)}, tsClr(ii,:));
+%         
+%         alpha(hCI(ii), 0.2);
+%         
+%         yMn = min(yMn, min(ciCurr(:,1)));
+%         yMx = max(yMx, max(ciCurr(:,2)));
+%     end
 end
 
 hCI(isnan(hCI)) = [];
 
-if ~isempty(lineSpec)
-    if ~iscell(lineSpec)
-        lineSpec = {lineSpec};
+if ~isempty(mrkrSpec)
+    if ~iscell(mrkrSpec)
+        mrkrSpec = {mrkrSpec};
     end
     
-    if numel(lineSpec) == 1
-        lineSpec = repmat(lineSpec, nTs, 1);
-    elseif ~numel(lineSpec) == nTs
-        error('plotTsCi:nLineSpec', ['The line specification has ' num2str(numel(lineSpec)) ' entries, but there are ' num2str(nTs) ' lines to plot.'])
+    if numel(mrkrSpec) == 1
+        mrkrSpec = repmat(mrkrSpec, nTs, 1);
+    elseif ~numel(mrkrSpec) == nTs
+        error('plotTsCi:nLineSpec', ['The line specification has ' num2str(numel(mrkrSpec)) ' entries, but there are ' num2str(nTs) ' lines to plot.'])
     end
 end
 
-%Plot mean projection lines:
-hTs = nan(nTs,1);
+%Plot series:
+hScat = nan(nTs,1);
 for ii = 1 : nTs
-    tsCurr = varargin{1+3*(ii-1)};
-    
-    if ~isempty(lineSpec)
-        hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr, lineSpec{ii}, 'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+    xCurr = varargin{1+2*(ii-1)};
+    yCurr = varargin{2+2*(ii-1)};
+
+    if ~isempty(mrkrSpec)
+        hScat(ii) = scatter(xCurr, yCurr, mrkrSize, mrkrClr(ii,:), mrkrSpec{ii}, 'filled');
     else
-        hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+        hScat(ii) = scatter(xCurr, yCurr, mrkrSize, mrkrClr(ii,:), 'filled');
     end
     
-    yMn = min(yMn, min(tsCurr));
-    yMx = max(yMx, max(tsCurr));
+    yMn = min(yMn, min(yCurr));
+    yMx = max(yMx, max(yCurr));
     
-    xMn = min(xMn, min(varargin{3+3*(ii-1)}(:)));
-    xMx = max(xMx, max(varargin{3+3*(ii-1)}(:)));
+    xMn = min(xMn, min(xCurr));
+    xMx = max(xMx, max(xCurr));
 end
 
-if ~isempty(refLn)
-    hLine = line(refLn(1:2), refLn(3:4));
-    refGray = [0.5,0.5,0.5];
-    
-    set(hLine,'LineWidth', sPlot.lnwd, ...
-        'color', refGray, 'LineStyle','--');
+
+if ~isempty(refLn(:))
+    hLine = nan(numel(refLn));
+
+    for ii = 1 : numel(refLn)
+        hLine(ii) = line(refLn{ii}(1:2), refLn{ii}(3:4));
+        refGray = [0.5,0.5,0.5];
+
+        set(hLine(ii),'LineWidth', sPlot.lnwd, ...
+            'color', refGray, 'LineStyle','--');
+    end
 end
 
 hold off
 
+%Set x and y limits (if input)
+if all(~isnan(xLim))
+    xlim(xLim);
+else
+    xRng = xMx - xMn;
+    if xRng  < 10
+        xScl = 1.07;
+    elseif xRng < 20
+        xScl = 1.07;
+    elseif xRng  < 30
+        xScl = 1.09;
+    elseif xRng  < 40
+        xScl = 1.09;
+    else
+        xScl = 1.1;
+    end
+    xlim([0.97*xMn, xScl*xMx]);
+end
+if all(~isnan(yLim))
+    ylim(yLim);
+else
+    yRng = yMx - yMn;
+    if yRng  < 10
+        yScl = 1.07;
+    elseif yRng < 20
+        yScl = 1.07;
+    elseif yRng  < 30
+        yScl = 1.09;
+    elseif yRng  < 40
+        yScl = 1.09;
+    else
+        yScl = 1.1;
+    end
+    ylim([0.97*yMn, yScl*yMx]);
+end
+
 %Check to see if there are legend entries for all inputs:
 hLgd = [];
-if numel(clLgd(:)) == numel(hTs(:))
-    hTsLgd = hTs;
-    for ii = numel(hTs(:)) : -1 : 1
+if numel(clLgd(:)) == numel(hScat(:))
+    hTsLgd = hScat;
+    for ii = numel(hScat(:)) : -1 : 1
         if isempty(clLgd{ii})
             clLgd(ii) = [];
             hTsLgd(ii) = [];
@@ -136,7 +187,7 @@ if numel(clLgd(:)) == numel(hTs(:))
         hLgd = legend(hTsLgd, clLgd, 'Location','northwest');
     end
 else
-    warning('plotTsCi:diffNumTsLgd',['There are ' num2str(numel(hTs(:))) ...
+    warning('plotTsCi:diffNumTsLgd',['There are ' num2str(numel(hScat(:))) ...
         ' time-series and ' num2str(numel(clLgd(:))) ' legend entries. '...
         'A legend is not being produced because the numbers do not match.']);
 end
@@ -158,20 +209,6 @@ if isfield(sPlot, 'xlabel')
     'Color', 'black');
 end
 
-yRng = yMx - yMn;
-if yRng  < 10
-    yScl = 1.07;
-elseif yRng < 20
-    yScl = 1.07;
-elseif yRng  < 30
-    yScl = 1.09;
-elseif yRng  < 40
-    yScl = 1.09;
-else
-    yScl = 1.1;
-end
-xlim([xMn, xMx]);
-ylim([0.97*yMn, yScl*yMx]);
 
 if ~isempty(yLab)
     hYLab = ylabel(yLab);
@@ -198,7 +235,7 @@ end
 %         'linestyle','--');
 % end
 %Set figure properties:
-set(hTs, ...
+set(hScat, ...
     'LineWidth', sPlot.lnwd);
 if ~isempty(hCI)
     set(hCI,...
