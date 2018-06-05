@@ -213,7 +213,7 @@ for mm = 1 : nFit
             nFitG = nan(size(squeeze(mod(1,:,:))));
             for jj = 1 : numel(mod(1,:,1))
                 for ii = 1 : numel(mod(1,1,:))
-                    indUse = intersect(find(~isnan(squeeze(obs(:,jj,ii)))), find(~isnan(squeeze(mod(:,jj,ii)))));
+                    indUse = find(~isnan(squeeze(obs(:,jj,ii))) & ~isnan(squeeze(mod(:,jj,ii))));
 
                     if ~isempty(indUse)
                         %[r,p] = corrcoef(squeeze(obs(indUse,jj,ii)), squeeze(mod(indUse,jj,ii)));
@@ -274,18 +274,22 @@ for mm = 1 : nFit
     elseif regexpbl(strEval{mm},{'Parajka','MODIS'})
         %Find number of pixels that are glaciated or have permanent snow cover
         %(i.e. always 100 or nan in MODIS observations)
-        subGlac = zeros(0,2);
+        szGrid = size(squeeze(obs(1,:,:)));
+        subGlac = zeros(prod(szGrid),1, 'single');
         nGlacThresh = 0.01*numel(obs(:,1,1));
+        cntr = 1;
         for jj = 1 : numel(obs(1,:,1))
             for ii = 1 : numel(obs(1,1,:))
                 if sum2d(~isnan(obs(:,jj,ii)) & obs(:,jj,ii) ~= 100) < nGlacThresh
-                    subGlac(end+1,:) = [jj,ii];
-
+                    subGlac(cntr) = sub2ind(szGrid, jj, ii);
+                    cntr = cntr + 1;
+                    
                     mod(:,jj,ii) = nan;
                     obs(:,jj,ii) = nan;
                 end
             end
         end
+        subGlac(cntr:end) = [];
 
         %Parajka, J., & Blöschl, G. (2008). The value of MODIS snow cover data 
         %in validating and calibrating conceptual hydrologic models. Journal of 
@@ -299,7 +303,7 @@ for mm = 1 : nFit
             end
         end
         
-        lPix = numel(obs(1,:,:)) - numel(subGlac(:,1));
+        lPix = numel(obs(1,:,:)) - numel(subGlac);
 
         thrshSWE = 10/100; %units = m
         thrshSCA = 10; %units = percent
@@ -310,7 +314,8 @@ for mm = 1 : nFit
         EUnd = nan(size(squeeze(obs(1,:,:))));
         for jj = 1 : numel(obs(1,:,1))
             for ii = 1 : numel(obs(1,1,:))
-                if ~ismember([jj,ii],subGlac,'rows')
+                indCurr = sub2ind(szGrid, jj, ii);
+                if ~any(indCurr ==subGlac)
                     indNNan = find(~isnan(mod(:,jj,ii)) & ~isnan(obs(:,jj,ii)));
 
                     indYObs = find(obs(indNNan,jj,ii) > thrshSCA);
