@@ -130,7 +130,7 @@ for mm = 1 : nFit
         %performance of gridded glacier mass balance modelling over a region
         %The 'rTerm' assesses error in the spatial pattern (first using a smoothing filter)
         %The 'bTerm' assesses error in the regional bias
-
+        
         %Apply Gaussian filter for calculating correlation
         rad = 2;
         sigma = rad;

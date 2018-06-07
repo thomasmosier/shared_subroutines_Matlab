@@ -78,7 +78,7 @@ elseif numel(endVec(1,:)) == 5
     nDec = 6;
 end
 
-nDays = NaN(length(endVec(:,1)),1);
+nDays = nan(length(endVec(:,1)),1);
 
 %Converts calendar name into number corresponding to class:
 blCal = cal_class(strCal);
