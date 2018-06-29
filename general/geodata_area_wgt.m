@@ -42,13 +42,13 @@ if length(szIn) == 3
         error('geodataAreaWgt:data3dOrder','The function currently only works with 3d data when the dimensions are in the order time, lat, lon.'); 
     end
     
-    szOut = [szIn(1), numel(latIn), numel(lonIn)];
+    szOut = [szIn(1), numel(latOut), numel(lonOut)];
 else
     if ~any(numel(latIn) == szIn) || ~any(numel(lonIn) == szIn)  
         error('geodataAreaWgt:data2dSize','The length of the lat and lon dimensions do not match data lengths.'); 
     end
     
-    szOut = [numel(latIn), numel(lonIn)];
+    szOut = [numel(latOut), numel(lonOut)];
 end
 
 %%Reorient data and reference vectors:
@@ -204,8 +204,8 @@ latInEdg  = box_edg(latIn);
 %     dlLonOut(ii,:) = dLonOut*cosd(latOut(ii));
 % end
 
-%Initialize output array:
-dataOut = nan([numel(latOut), numel(lonOut)], 'single');
+% %Initialize output array:
+% dataOut = nan(szOut(end-1:end), 'single');
 
 %Find indices to loop over (indices can be skipped if they are entirely outside of input grid cells)
 indLonOutUse = find(lonOutEdg(2:end) > min(lonInEdg) & lonOutEdg(1:end-1) < max(lonInEdg));

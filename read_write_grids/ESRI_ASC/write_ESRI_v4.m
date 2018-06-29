@@ -29,10 +29,14 @@ function write_ESRI_v4(data, hdr, pathOut, nDec)
 %'nDec' defines decimal point precision
 
 %Check that data only has two dimensions:
-if length(size(data)) > 2
-   error('write_ESRI:dim3',['The data to be written to ' char(39) ...
-       pathOut char(39) ' has more than two dimensions, ' ...
-       'which is not allowed.']);
+if ndims(data) > 2
+    data = squeeze(data);
+    
+    if ~ismatrix(data)
+       error('write_ESRI:dim3',['The data to be written to ' char(39) ...
+           pathOut char(39) ' has more than two dimensions, ' ...
+           'which is not allowed.']);
+    end
 end
 
 %Convert from NaN to numberic tag:

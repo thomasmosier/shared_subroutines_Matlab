@@ -253,7 +253,7 @@ timeBndsDays = days_since(refDate, dateBnds, 'gregorian');
 
 %Check if time elements are nan:
 if sum(isnan(timeDays)) > 0
-   warning('write_NC:nanTime',[' NaN time '...
+   warning('printGridNc:nanTime',[' NaN time '...
        'values have been detected.  This may cause the program to crash.']); 
 end
 
@@ -287,7 +287,7 @@ elseif numel(timeBndsDays) == numel(timeDays) + 1
 elseif all(isnan(timeBndsDays)) && all(isnan(timeDays)) 
     timeBndsDaysWrt = [timeBndsDays(:)'; timeBndsDays(:)'];
 else
-    error('write_NC:unknownTimeBnds','The dimensions or values of time bounds are not recognized.')
+    error('printGridNc:unknownTimeBnds','The dimensions or values of time bounds are not recognized.')
 end
 
 %Write time bounds:
