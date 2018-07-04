@@ -259,9 +259,9 @@ elseif ~isempty(regexpi(wrtTyp,'asc'))
             
             %RESAMPLE DATA TO NEW GRID:
             if length(size(sData.(var))) == 3 && numel(latR) > 1 && numel(lonR) > 1
-                dataCurr = area_int_2D_v2(sData.(varLon),sData.(varLat),sData.(var)(ii,:,:),lonR,latR);
+                dataCurr = geodata_area_wgt(sData.(varLon),sData.(varLat),sData.(var)(ii,:,:),lonR,latR);
             elseif length(size(sData.(var))) == 2 && numel(latR) > 1 && numel(lonR) > 1
-                dataCurr = area_int_2D_v2(sData.(varLon),sData.(varLat),sData.(var)(:,:),lonR,latR);
+                dataCurr = geodata_area_wgt(sData.(varLon),sData.(varLat),sData.(var)(:,:),lonR,latR);
             else
                 dataCurr = NaN;
             end
