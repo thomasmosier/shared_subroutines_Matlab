@@ -71,6 +71,14 @@ elseif numel(dateStart(1,:)) == 2
         ii = ii + 1;
     end
 elseif numel(dateStart(1,:)) == 3
+    eomTest = eomday(dateEnd(1,1), dateEnd(1,2));
+    if dateEnd(1,3) > eomTest
+        warning('dateVecFill:endDateFix',['The input end day of month is ' ...
+            num2str(dateEnd(1,3)) ', which is not possible. It is being set to ' ...
+            num2str(eomTest) '.']);
+        dateEnd(1,3) = eomTest;
+    end
+    
     ii = 1;
     while ~isequal(dateFilled(ii,:), dateEnd)
         if dateFilled(ii,2) == 2
@@ -96,6 +104,14 @@ elseif numel(dateStart(1,:)) == 3
         ii = ii + 1;
     end
 elseif numel(dateStart(1,:)) == 4
+    eomTest = eomday(dateEnd(1,1), dateEnd(1,2));
+    if dateEnd(1,3) > eomTest
+        warning('dateVecFill:endDateFix',['The input end day of month is ' ...
+            num2str(dateEnd(1,3)) ', which is not possible. It is being set to ' ...
+            num2str(eomTest) '.']);
+        dateEnd(1,3) = eomTest;
+    end
+    
     ii = 1;
     while ~isequal(dateFilled(ii,:), dateEnd)
         if dateFilled(ii,4) ~= 24;
