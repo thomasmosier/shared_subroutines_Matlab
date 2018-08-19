@@ -90,9 +90,13 @@ function colors = distinguishable_colors(n_colors,bg,func)
     lab = func(rgb);
     bglab = func(bg);
   else
-    C = makecform('srgb2lab');
-    lab = applycform(rgb,C);
-    bglab = applycform(bg,C);
+      %Uses functions from File Exchange
+      lab = colorspace('RGB->lab',rgb);
+      bglab = colorspace('RGB->lab',bg);
+      %Uses Image Processing Toolbox
+%     C = makecform('srgb2lab');
+%     lab = applycform(rgb,C);
+%     bglab = applycform(bg,C);
   end
 
   % If the user specified multiple background colors, compute distances

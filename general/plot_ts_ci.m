@@ -18,6 +18,8 @@ yLab = [];
 xLab = [];
 ciType = 'err';
 lineSpec = [];
+MarkerFaceColor = [];
+MarkerEdgeColor = [];
 if numel(varargin(:)) > nTs*3
     for ii = nTs*3 + 1 : numel(varargin(:))
         if strcmpi(varargin{ii}, 'refline')
@@ -34,6 +36,10 @@ if numel(varargin(:)) > nTs*3
             ciType = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'linespec')
             lineSpec = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'MarkerFaceColor')
+            MarkerFaceColor = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'MarkerEdgeColor')
+            MarkerEdgeColor = varargin{ii+1};
         end
     end
 end
@@ -53,8 +59,9 @@ yMx = -10^6;
 
 %Create figure
 hFig = figure('Units','in','Position',[2 2 sPlot.sz], 'paperunits','in','paperposition',[2 2 sPlot.sz], 'color', 'white', 'visible', sPlot.vis, 'AlphaMap', 1);
-set(0,'defaultfigurecolor',[1 1 1])
-whitebg([1,1,1])
+% set(0,'defaultfigurecolor',[1 1 1])
+% whitebg([1,1,1]);
+set(gcf,'color','w');
 hold on
 
 %Plot confidence intervals first:
@@ -103,6 +110,25 @@ for ii = 1 : nTs
     else
         hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
     end
+    
+    if ~isempty(MarkerFaceColor)
+        if strcmpi(MarkerFaceColor, 'filled')
+            set(hTs(ii), 'MarkerFaceColor', tsClr(ii,:));
+        else
+            set(hTs(ii), 'MarkerFaceColor', MarkerFaceColor);
+        end
+    end
+    
+    if ~isempty(MarkerEdgeColor)
+        if isprop(hTs(ii), 'MarkerEdgeColor')
+            if strcmpi(MarkerEdgeColor, 'same')
+                set(hTs(ii), 'MarkerEdgeColor', tsClr(ii,:));
+            else
+                set(hTs(ii), 'MarkerEdgeColor', MarkerEdgeColor);
+            end
+        end
+    end
+    
     
     yMn = min(yMn, min(tsCurr));
     yMx = max(yMx, max(tsCurr));
