@@ -37,6 +37,11 @@ end
 if numel(rng) <= 2 && all(isnan(rng))
     rng = [nanmin(data), nanmax(data)];
 end
+
+%Write range as variable output argument
+if nargout > 1
+   varargout{1} = rng; 
+end
     
 if iscell(data)
    error('ePdf:cell','This function cannot handle cell input.'); 
@@ -46,6 +51,7 @@ end
 %Sort data:
 data(isnan(data)) = [];
 data = sort(data(:));
+
 if numel(data) == 0
    pdf = nan;
    val = nan;
@@ -55,8 +61,6 @@ end
 if all(isnan(data))
     error('ePdf:dataNan','All input data are nan. This is not allowed.');
 end
-nData = numel(data);
-
 
 %Ensure nBins is valid and integer
 if isnan(nBins) || ~isnumeric(nBins) || (isnumeric(nBins) && nBins < 1)
@@ -64,6 +68,13 @@ if isnan(nBins) || ~isnumeric(nBins) || (isnumeric(nBins) && nBins < 1)
 end
 nBins = round(nBins);
 
+nPtUse = numel(data);
+% nPtUse = sum(data >= rng(1) & data <= rng(2));
+% if nPtUse == 0
+%     pdf = nan(nBins,1);
+%     val = pdf;
+%     return
+% end
 
 %Create bins:
 bins = linspace(rng(1), rng(2), nBins+1);
@@ -83,7 +94,7 @@ for ii = 1 : nBins
     end
     
     if ~isempty(indCurr)
-        pdf(ii) = numel(indCurr) / nData;
+        pdf(ii) = numel(indCurr) / nPtUse;
         val(ii) = nanmean(data(indCurr));
     else
         pdf(ii) = 0;
@@ -104,16 +115,11 @@ end
 % end
 % clear cntr
 
-
+% This check causes error in cases when the range is a subset of the input data 
 %Check that PDF sums to 1
-if round2(sum(pdf), 4) ~= 1
-   error('ePdf:missingData',['The PDF sums to ' num2str(sum(pdf)) ',  but it should equal 1.0.']); 
-end
+% if round2(sum(pdf), 4) ~= 1
+%    error('ePdf:missingData',['The PDF sums to ' num2str(sum(pdf)) ',  but it should equal 1.0.']); 
+% end
 
-
-%Write range as variable output argument
-if nargout > 1
-   varargout{1} = rng; 
-end
 
 

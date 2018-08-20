@@ -18,7 +18,7 @@ elseif ~regexpbl(typ, 'all')
     error('geodataGetRange:typeUnknown', ['The type ' typ ' is unknown. It should either be nan or all.']);
 end
 
-mn = min(dataTmp);
-mx = max(dataTmp);
-avg = mean(dataTmp);
-sd = std(dataTmp);
+mn = double(min(dataTmp));
+mx = double(max(dataTmp));
+avg = double(mean(dataTmp));
+sd = double(std(dataTmp));

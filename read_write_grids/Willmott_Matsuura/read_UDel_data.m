@@ -62,14 +62,24 @@ ldTs(cntr:end,:) = [];
 arrayData = nan(numel(filesTS(:)), 360 , 720,'single');
 
 cntr = 0;   %Used to assign time indices in output array;
-
 %Willmott and Matsuura data stored by year, so loop over unique years:
 for jj = 1 : numel(filesTS(:))
     %Read raw W&M data
     tfid = fopen(fullfile(dirTS,filesTS{jj}));
     tMat = textscan(tfid,'%f');
-    tMat = single(reshape(tMat{1}, 14, [])');
     fclose(tfid);
+    
+    if iscell(tMat)
+       tMat = tMat{1}; 
+    end
+    if mod(numel(tMat),14) == 0
+        tMat = single(reshape(tMat, 14, [])');
+    elseif mod(numel(tMat),15) == 0
+        tMat = single(reshape(tMat, 15, [])'); %Last column is just annual value
+        tMat = tMat(:,1:14);
+    else
+        error('readUDelData:unknownShape','The input data is not divisible by 14 or 15. This number of elements has not been programmed for.');
+    end
 
     %%Record subset of months requested for current year:
     %Find months requested for current year:

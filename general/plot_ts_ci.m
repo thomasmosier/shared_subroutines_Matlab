@@ -20,6 +20,7 @@ ciType = 'err';
 lineSpec = [];
 MarkerFaceColor = [];
 MarkerEdgeColor = [];
+xLm = nan(1,2);
 if numel(varargin(:)) > nTs*3
     for ii = nTs*3 + 1 : numel(varargin(:))
         if strcmpi(varargin{ii}, 'refline')
@@ -40,6 +41,8 @@ if numel(varargin(:)) > nTs*3
             MarkerFaceColor = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'MarkerEdgeColor')
             MarkerEdgeColor = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'xlim')
+            xLm = varargin{ii+1};
         end
     end
 end
@@ -103,12 +106,20 @@ end
 %Plot mean projection lines:
 hTs = nan(nTs,1);
 for ii = 1 : nTs
+    xCurr = varargin{3+3*(ii-1)};
     tsCurr = varargin{1+3*(ii-1)};
     
+    if all(~isnan(xLm))
+        indUse = find(xCurr >= min(xLm) & xCurr <= max(xLm));
+        
+        xCurr = xCurr(indUse);
+        tsCurr = tsCurr(indUse);
+    end
+    
     if ~isempty(lineSpec)
-        hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr, lineSpec{ii}, 'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+        hTs(ii) = plot(xCurr, tsCurr, lineSpec{ii}, 'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
     else
-        hTs(ii) = plot(varargin{3+3*(ii-1)}, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+        hTs(ii) = plot(xCurr, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
     end
     
     if ~isempty(MarkerFaceColor)
@@ -133,8 +144,8 @@ for ii = 1 : nTs
     yMn = min(yMn, min(tsCurr));
     yMx = max(yMx, max(tsCurr));
     
-    xMn = min(xMn, min(varargin{3+3*(ii-1)}(:)));
-    xMx = max(xMx, max(varargin{3+3*(ii-1)}(:)));
+    xMn = min(xMn, min(xCurr));
+    xMx = max(xMx, max(xCurr));
 end
 
 if ~isempty(refLn)
@@ -196,8 +207,18 @@ elseif yRng  < 40
 else
     yScl = 1.1;
 end
-xlim([xMn, xMx]);
-ylim([0.97*yMn, yScl*yMx]);
+
+if xMx > xMn
+    xlim([xMn, xMx]);
+elseif isnan(xMn) || isnan(xMx)
+    return
+end
+if yMx > yMn
+    ylim([0.97*yMn, yScl*yMx]);
+elseif isnan(yMn) || isnan(yMx)
+    return
+end
+
 
 if ~isempty(yLab)
     hYLab = ylabel(yLab);
