@@ -36,7 +36,7 @@ sData = cell(nMem, 1);
 %Loop over input paths
 for kk = 1 : nMem
     if iscell(pathLd{1}) %Check first ensemble member here
-        sDataTemp = cell(numel(varLd));
+        sDataTemp = cell(numel(varLd),1);
 
         for ll = 1 : numel(varLd(:))
             disp(['Loading ensemble member ' num2str(kk) ' of ' num2str(nMem) ' (variable ' num2str(ll) ' of ' num2str(numel(varLd(:))) ').']);
@@ -64,7 +64,11 @@ for kk = 1 : nMem
         end
     else
         if iscell(varLd)
-            error('loadNcEnsemble:multVar','Multiple input variables selected to load, but format of file paths is not correct to support loading multiple variables.')
+            if numel(varLd(:)) == 1
+                varLd = varLd{1};
+            else
+                error('loadNcEnsemble:multVar','Multiple input variables selected to load, but format of file paths is not correct to support loading multiple variables.');
+            end
         end
         
         disp(['Loading ensemble member ' num2str(kk) ' of ' num2str(nMem) '.']);

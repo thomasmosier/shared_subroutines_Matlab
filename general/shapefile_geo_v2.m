@@ -176,7 +176,7 @@ for zz = 1 : length(S)
     % Find number of starting
     % indices of polygons
     %-----------------------------
-
+    keyboard
     [xsplit, ysplit] = polysplit(shpX, shpY);
     isCw = ispolycw(xsplit, ysplit);
     mainPolyIndices = find(isCw);

@@ -35,33 +35,41 @@ if all(~isnan(mnthsLd))
 
 
     if ~regexpbl(wcVar, 'alt')
-        fileWcLd = cell(numel(mnthsLd), 1);
+        pathWcLd = cell(numel(mnthsLd), 1);
         for ii = 1 : numel(mnthsLd)
             if numel(mnthsLd(ii)) == 1 && mnthsLd(ii) < 10
                 strMnth = ['0' num2str(mnthsLd(ii))];
             else
                 strMnth = num2str(mnthsLd(ii));
             end
-            fileTemp = extract_field(dir(fullfile(pathWC, strcat('*', wcVar, '_', strMnth, '.tif' ))), 'name');
+            pathTemp = extract_field(dir(fullfile(pathWC, strcat('*', wcVar, '_', strMnth, '.tif' ))), 'name');
 
-            if numel(fileTemp(:)) == 1
-                fileWcLd{ii} = fileTemp{1};
+            if numel(pathTemp) > 0
+                pathTemp = remove_sys_files(pathTemp);
+                
+                if numel(pathTemp(:)) == 1
+                    pathWcLd{ii} = pathTemp{1};
+                else
+                    error('readWorldClimTif:wrongFileNumber', [num2str(numel(pathTemp(:))) ...
+                        ' files were found. Only one is expected.']);
+                end
             else
-                error('readWorldClimTif:wrongFileNumber', [num2str(numel(fileTemp(:))) ...
-                    ' files were found. Only one is expected.']);
+                error('readWorldClimTif:noFiles', ['No files were found.']);
             end
         end
     else
-        fileWcLd = extract_field(dir(fullfile(pathWC, strcat('*', wcVar, '.tif' ))), 'name');
+        pathWcLd = extract_field(dir(fullfile(pathWC, strcat('*', wcVar, '.tif' ))), 'name');
+        
+        pathWcLd = remove_sys_files(pathWcLd);
     end
 
-    if isempty(fileWcLd)
+    if isempty(pathWcLd)
         error('read_geodata:wcTifNotFound',['No WorldClim file for month ' ...
             strMnth ' was found.']);
     end
 else
-    [~, fileWcLd, extLd] = fileparts(pathData);
-    fileWcLd = {[fileWcLd, extLd]};
+    [~, pathWcLd, extLd] = fileparts(pathData);
+    pathWcLd = {[pathWcLd, extLd]};
     
 %     if regexpbl(fileWcLd, 'prec')
 %         wcVar = 'prec';
@@ -79,14 +87,14 @@ else
 end
 
 
-for ii = 1 : numel(fileWcLd)
+for ii = 1 : numel(pathWcLd)
 
-    [dataTemp, lonTemp, latTemp, ~] = geoimread(fullfile(pathWC, fileWcLd{ii}));
+    [dataTemp, lonTemp, latTemp, ~] = geoimread(fullfile(pathWC, pathWcLd{ii}));
     
     [data, lon, lat] = crop_grid(dataTemp, lonTemp, latTemp, lonDs, latDs, fr, cropType);
     
     if ii == 1
-        sData.(varLd) = nan([numel(fileWcLd), numel(lat), numel(lon)], 'single');
+        sData.(varLd) = nan([numel(pathWcLd), numel(lat), numel(lon)], 'single');
         sData.(varLon) = lon;
         sData.(varLat) = lat;
     end

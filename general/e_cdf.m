@@ -18,7 +18,7 @@
 % along with the Downscaling Package.  If not, see 
 % <http://www.gnu.org/licenses/>.
 
-function [cdf, val] = e_cdf(data, varargin)
+function [cprob, val] = e_cdf(data, varargin)
 
 type = 'sort';
 bins = nan;
@@ -63,23 +63,23 @@ end
 nData = numel(data);
 
 if numel(data) == 0
-   cdf = nan;
+   cprob = nan;
    val = nan;
    
    return
 end
 
 if strcmpi(type, 'sort')
-    cdf = (cumsum(ones(nData,1))) / nData;
+    cprob = (cumsum(ones(nData,1))) / nData;
 
     val = sort(data(:),'ascend');
     
-    cdf = [0; cdf];
+    cprob = [0; cprob];
     val = [val(1); val];
 elseif regexpbl(type, {'no','sort'}, 'and')
-    cdf = nan(numel(data), 1);
+    cprob = nan(numel(data), 1);
     for ii = 1 : numel(data)
-        cdf(ii) = sum(data(ii) >= data(:)) / nData;
+        cprob(ii) = sum(data(ii) >= data(:)) / nData;
     end
     val = data(:);
 else

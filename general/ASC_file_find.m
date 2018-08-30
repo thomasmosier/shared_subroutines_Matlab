@@ -74,27 +74,42 @@ for ii = 1 : length(fileTemp)
 end
 
 %Find dates of all files:
+%Determine datestring format:
+indFullDate = regexpi(filesTS{1},'\d{8}');
 indUnd = regexpi(filesTS{1},'_|\.');
-nDiv = 0;
-for ii = numel(indUnd)-1 : -1 : 1
-    if ~isnan(str2double(filesTS{1}(indUnd(ii)+1:indUnd(ii+1)-1)))
-        nDiv = nDiv + 1; 
-    end
-end
-fileDate = nan(length(filesTS), nDiv);
-for jj = 1:length(filesTS)
-    indSep = regexpi(filesTS{jj},'_|\.');
+if numel(regexpi(filesTS{1},'\d{8}')) >= 2
+    nDiv = 3;
+    fileDate = nan(length(filesTS), nDiv);
     
-    for ii = 1 : nDiv
-        indC = numel(indSep) - nDiv + ii - 1;
-        fileDate(jj,ii) = str2double(filesTS{jj}(indSep(indC)+1:indSep(indC+1)-1)); 
+    for jj = 1 : length(filesTS) %Loop over files
+        fileDate(jj,:) = [str2double(filesTS{jj}(indFullDate(1)+(0:3))), str2double(filesTS{jj}(indFullDate(1)+(4:5))), str2double(filesTS{jj}(indFullDate(1)+(6:7)))];
     end
+elseif ~isempty(indUnd)  
+    nDiv = 0;
+    for ii = numel(indUnd)-1 : -1 : 1
+        if ~isnan(str2double(filesTS{1}(indUnd(ii)+1:indUnd(ii+1)-1)))
+            nDiv = nDiv + 1; 
+        end
+    end
+    fileDate = nan(length(filesTS), nDiv);
+    for jj = 1:length(filesTS) %Loop over files
+        indSep = regexpi(filesTS{jj},'_|\.');
+
+        for ii = 1 : nDiv %Loop over representation
+            indC = numel(indSep) - nDiv + ii - 1;
+            fileDate(jj,ii) = str2double(filesTS{jj}(indSep(indC)+1:indSep(indC+1)-1)); 
+        end
+    end
+else
+    error('ascFileFind:dateUnknown',['The date format for exmaple file ' filesTS{1} ' is not known.']);
 end
 
 
 %Find dates requested:
-if all(~isnan(ldTs))
-    [~, indUse, ~] = intersect(fileDate,ldTs,'rows');
+if isempty(fileDate)
+    indUse = [];
+elseif all(~isnan(ldTs))
+    [~, indUse, ~] = intersect(fileDate(:,1:numel(ldTs(1,:))),ldTs,'rows');
 else
     indUse = (1:numel(fileDate(:,1)));
 end

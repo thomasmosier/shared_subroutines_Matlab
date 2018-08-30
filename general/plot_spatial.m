@@ -43,9 +43,13 @@ if ~isempty(lat) && ~isempty(lon)
     
     if isfield(sPlot, 'lonlimit')
         indLonBnd = [find(lon >= min(sPlot.lonlimit), 1, 'first'), find(lon <= max(sPlot.lonlimit), 1, 'last')];
+    else
+        indLonBnd = [1, numel(lon)];
     end
     if isfield(sPlot, 'latlimit')
         indLatBnd = [find(lat <= max(sPlot.latlimit), 1, 'first'), find(lat >= min(sPlot.latlimit), 1, 'last')];
+    else
+        indLatBnd = [1, numel(lat)];
     end
     
     edgLon = box_edg(lon);
