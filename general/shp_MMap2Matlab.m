@@ -46,7 +46,7 @@ if ~isempty(varargin(:))
             end
             clear ii
         else
-            warning('shpMMap2Matlab:noField',['The field ' varargin{jj} ' was not found in the current shapefile.'])
+            warning('shpMMap2Matlab:noField',['The field ' fldIn ' was not found in the current shapefile.'])
         end
     end
     clear jj

@@ -38,6 +38,7 @@ end
 %Find splits delineated by matching vertices:
 crdIn = [x(:), y(:)];
 [~,I,~] = unique(crdIn, 'rows');
+% sort(I)
 ixDup = setdiff(1:numel(x), I);
 
 if numel(ixDup) > 0 %All closed polygons have one duplicate (should be first and last entries)
@@ -45,7 +46,7 @@ if numel(ixDup) > 0 %All closed polygons have one duplicate (should be first and
     yCellDup = xCellDup;
     
     for ii = 1 : numel(ixDup)
-        indDup = ismember(crdIn, crdIn(ixDup,:), 'rows');
+        indDup = ismember(crdIn, crdIn(ixDup(ii),:), 'rows');
         indDup = find(indDup == 1);
         if numel(indDup) ~= 2
             error('polySplit:incorrectDuplicateRows', ['The current vertice is duplicated ' ...
