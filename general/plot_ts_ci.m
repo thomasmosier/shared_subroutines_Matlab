@@ -21,6 +21,8 @@ lineSpec = [];
 MarkerFaceColor = [];
 MarkerEdgeColor = [];
 xLm = nan(1,2);
+yLm = nan(1,2);
+locLgd = 'northwest';
 if numel(varargin(:)) > nTs*3
     for ii = nTs*3 + 1 : numel(varargin(:))
         if strcmpi(varargin{ii}, 'refline')
@@ -43,6 +45,10 @@ if numel(varargin(:)) > nTs*3
             MarkerEdgeColor = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'xlim')
             xLm = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'ylim')
+            yLm = varargin{ii+1};
+        elseif regexpbl(varargin{ii}, {'legend','loc'}, 'and')  
+            locLgd = varargin{ii+1};
         end
     end
 end
@@ -106,20 +112,18 @@ end
 %Plot mean projection lines:
 hTs = nan(nTs,1);
 for ii = 1 : nTs
+    yCurr = varargin{1+3*(ii-1)};
     xCurr = varargin{3+3*(ii-1)};
-    tsCurr = varargin{1+3*(ii-1)};
     
-    if all(~isnan(xLm))
-        indUse = find(xCurr >= min(xLm) & xCurr <= max(xLm));
-        
-        xCurr = xCurr(indUse);
-        tsCurr = tsCurr(indUse);
+    if isempty(xCurr)
+        xCurr = nan;
+        yCurr = nan;
     end
     
     if ~isempty(lineSpec)
-        hTs(ii) = plot(xCurr, tsCurr, lineSpec{ii}, 'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+        hTs(ii) = plot(xCurr, yCurr, lineSpec{ii}, 'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
     else
-        hTs(ii) = plot(xCurr, tsCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
+        hTs(ii) = plot(xCurr, yCurr,'color', tsClr(ii,:), 'LineWidth', sPlot.lnwd);
     end
     
     if ~isempty(MarkerFaceColor)
@@ -141,11 +145,11 @@ for ii = 1 : nTs
     end
     
     
-    yMn = min(yMn, min(tsCurr));
-    yMx = max(yMx, max(tsCurr));
+    yMn = min(yMn, nanmin(yCurr));
+    yMx = max(yMx, nanmax(yCurr));
     
-    xMn = min(xMn, min(xCurr));
-    xMx = max(xMx, max(xCurr));
+    xMn = min(xMn, nanmin(xCurr(~isnan(yCurr))));
+    xMx = max(xMx, nanmax(xCurr(~isnan(yCurr))));
 end
 
 if ~isempty(refLn)
@@ -170,7 +174,7 @@ if numel(clLgd(:)) == numel(hTs(:))
     end
     
     if ~isempty(hTsLgd)
-        hLgd = legend(hTsLgd, clLgd, 'Location','northwest');
+        hLgd = legend(hTsLgd, clLgd, 'Location', locLgd);
     end
 else
     warning('plotTsCi:diffNumTsLgd',['There are ' num2str(numel(hTs(:))) ...
@@ -209,12 +213,32 @@ else
 end
 
 if xMx > xMn
-    xlim([xMn, xMx]);
+    xLmUse = [xMn, xMx];
+    
+    if any(~isnan(xLm))
+        if ~isnan(xLm(1))
+            xLmUse(1) = xLm(1);
+        end
+        if ~isnan(xLm(2))
+            xLmUse(2) = xLm(2);
+        end
+    end
+    
+    xlim(xLmUse);
 elseif isnan(xMn) || isnan(xMx)
     return
 end
 if yMx > yMn
-    ylim([0.97*yMn, yScl*yMx]);
+    yLmUse = [0.97*yMn, yScl*yMx];
+    if any(~isnan(yLm))
+        if ~isnan(yLm(1))
+            yLmUse(1) = yLm(1);
+        end
+        if ~isnan(yLm(2))
+            yLmUse(2) = yLm(2);
+        end
+    end
+    ylim(yLmUse);
 elseif isnan(yMn) || isnan(yMx)
     return
 end

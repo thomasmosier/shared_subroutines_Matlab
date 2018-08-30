@@ -6,6 +6,7 @@ strPtsUse = 'all';
 indIn = [];
 rng = nan(2,1);
 pdfTyp = 'frac';
+noVal = 'zero';
 for ii = 1 : numel(varargin(:))
    if regexpbl(varargin{ii}, {'pts', 'use'}, 'and')
        if isnumeric(varargin{ii+1})
@@ -21,8 +22,10 @@ for ii = 1 : numel(varargin(:))
        strType = varargin{ii+1};
    elseif regexpbl(varargin{ii}, {'rng', 'range'})
        rng = varargin{ii+1};
-   elseif regexpbl(varargin{ii}, 'percent')
-       pdfTyp = 'percent';
+   elseif regexpbl(varargin{ii}, 'type')
+       pdfTyp = varargin{ii+1};
+   elseif regexpbl(varargin{ii}, {'no', 'value'})
+       noVal = varargin{ii+1};
    end
 end
 
@@ -68,10 +71,7 @@ if iscell(sData)
                     griddedPdf{kk}(rUse(ll), cUse(ll), :), ...
                     griddedVal{kk}(rUse(ll), cUse(ll), :), ...
                     griddedRng{kk}(rUse(ll), cUse(ll), :)] ...
-                    = e_pdf(squeeze(sData{kk}.(var)(:, rUse(ll), cUse(ll))), nBins, 'rng', rng);
-            end
-            if regexpbl(pdfTyp, 'percent')
-                griddedPdf{kk} = 100*griddedPdf{kk};
+                    = e_pdf(squeeze(sData{kk}.(var)(:, rUse(ll), cUse(ll))), nBins, 'rng', rng, 'type', pdfTyp, 'no_value', noVal);
             end
         end
 	elseif regexpbl(strType, 'com')
@@ -108,10 +108,7 @@ if iscell(sData)
                 griddedPdf(rUse(ll), cUse(ll), :), ...
                 griddedVal(rUse(ll), cUse(ll), :), ...
                 griddedRng(rUse(ll), cUse(ll), :)] ...
-                = e_pdf(tempData, nBins, 'rng', rngCurr);
-        end
-        if regexpbl(pdfTyp, 'percent')
-            griddedPdf = 100*griddedPdf;
+                = e_pdf(tempData, nBins, 'rng', rngCurr, 'type', pdfTyp, 'no_value', noVal);
         end
     else
         error('geodataECdf:unknownMethod',['Analysis method ' strType ' has not been programmed for.']);
@@ -147,10 +144,7 @@ elseif isstruct(sData)
             griddedPdf(rUse(ll), cUse(ll), :), ...
             griddedVal(rUse(ll), cUse(ll), :), ...
             griddedRng(rUse(ll), cUse(ll), :)] ...
-            = e_pdf(squeeze(sData.(var)(:, rUse(ll), cUse(ll))), nBins, 'rng', rng);
-    end
-    if regexpbl(pdfTyp, 'percent')
-        griddedPdf = 100*griddedPdf;
+            = e_pdf(squeeze(sData.(var)(:, rUse(ll), cUse(ll))), nBins, 'rng', rng, 'type', pdfTyp, 'no_value', noVal);
     end
 else
     error('geodataECdf:unkownGeodataClass', ['The geodata class ' class(sData) ' has not been programmed for.']);
