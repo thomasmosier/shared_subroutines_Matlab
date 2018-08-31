@@ -17,8 +17,8 @@ shpOut(nShp).(varLon) = [];
 shpOut(nShp).(varLat) = [];
 
 for ii = 1 : nShp
-    shpOut(ii).(varLon) = shpIn.(varMMap){ii}(:,2);
-    shpOut(ii).(varLat) = shpIn.(varMMap){ii}(:,1);
+    shpOut(ii).(varLon) = shpIn.(varMMap){ii}(:,1);
+    shpOut(ii).(varLat) = shpIn.(varMMap){ii}(:,2);
 end
 
 %Variable input argument used to define fields to grab from input shapefile

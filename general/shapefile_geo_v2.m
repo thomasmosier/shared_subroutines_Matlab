@@ -18,7 +18,7 @@
 % along with the Downscaling Package.  If not, see 
 % <http://www.gnu.org/licenses/>.
 
-function [polyBl, polyVal] = shapefile_geo_v2(S, field, lat, lon)
+function [polyBl, varargout] = shapefile_geo_v2(S, lat, lon, blHole, varargin)
 %Note: same as 'interpshapefile' except that it removes shapes that are
 %sufficiently outside of lat/lon inputs before doing interpolation. Also
 %breaks interpolation up into pieces to reduce memory cost.
@@ -157,7 +157,44 @@ end
 
 %Initialize output:
 polyBl = zeros(size(lonMesh), 'single');
-polyVal = polyBl;
+if ~isempty(varargin)
+    flds = varargin;
+    polyVal = cell(numel(flds(:)), 1);
+    [polyVal{:}] = deal(nan(size(lonMesh), 'single'));
+else
+    polyVal = [];
+    if nargout > 1
+       error('shapefileGeo:NoInputFields','Field outputs requested, but no input field names provided.') 
+    end
+end
+
+%Test whether main polygons are CW or CCW orientation:
+%In general: CW (1) = main polygon; CCW (0) = hole
+%Sometimes the reverse is true
+
+nLp = min([length(S), 50]);
+testCw = nan(nLp, 1);
+
+for zz = 1 : length(S) 
+    shpX = S(zz).(strX);
+    shpY = S(zz).(strY);
+
+    if ~isvector(shpX) || ~isvector(shpY) || length(shpX) ~= length(shpY)
+        error('xv and yv must be vectors of the same length');
+    end
+
+    %-----------------------------
+    % Find number of starting
+    % indices of polygons
+    %-----------------------------
+    [xsplit, ysplit] = poly_split(shpX, shpY);
+	isCw = ispoly_cw(xsplit, ysplit);
+    
+    testCw(zz) = round(nanmean(isCw));
+end
+%Empirically determine if typical orientation is CW or CCW (use in loop below):
+blMainCW = round(nanmean(testCw));
+
 
 %Loop over polygons:
 for zz = 1 : length(S)
@@ -176,132 +213,58 @@ for zz = 1 : length(S)
     % Find number of starting
     % indices of polygons
     %-----------------------------
-    keyboard
-    [xsplit, ysplit] = polysplit(shpX, shpY);
-    isCw = ispolycw(xsplit, ysplit);
-    mainPolyIndices = find(isCw);
-    nHolesPer = diff([mainPolyIndices;length(isCw)+1]) - 1;
-
+    [xsplit, ysplit] = poly_split(shpX, shpY);
+	isCw = ispoly_cw(xsplit, ysplit); 
     
-    %Loop over points in polygon:
-    for ipoly = 1:length(mainPolyIndices)
-        isInMain = inpolygon(lonMesh, latMesh, xsplit{mainPolyIndices(ipoly)}, ysplit{mainPolyIndices(ipoly)});
-        if nHolesPer(ipoly) > 0
-            isInHole = zeros(size(lonMesh), 'single');
-            for ihole = 1:nHolesPer(ipoly)
-                holeTemp = inpolygon(lonMesh, latMesh, xsplit{mainPolyIndices(ipoly)+ihole}, ysplit{mainPolyIndices(ipoly)+ihole});
-                isInHole(holeTemp == 1) = 1;
-            end
 
-            polyBl( isInMain & ~isInHole ) = 1;
-            polyVal( isInMain & ~isInHole ) = S(zz).(field);
-        else
-            polyBl(isInMain == 1) = 1; 
-            polyVal(isInMain == 1) = S(zz).(field);
+    if blMainCW
+        mainPoly = find(isCw);
+    else
+        mainPoly = find(~isCw);
+    end
+    holePoly = setdiff((1:numel(isCw)), mainPoly);
+    nMain = numel(mainPoly);
+    nHole = numel(holePoly);
+    
+    %Loop over features in polygon:
+    isInMain = zeros(size(lonMesh), 'single');
+    if nMain > 0
+        for xx = 1 : nMain
+            mainTemp = inpolygon(lonMesh, latMesh, xsplit{mainPoly(xx)}, ysplit{mainPoly(xx)});
+            isInMain(mainTemp == 1) = 1;
+        end
+    end
+        
+    isInHole = zeros(size(lonMesh), 'single');
+    if nHole > 0 && blHole
+        for xx = 1 : nHole
+            holeTemp = inpolygon(lonMesh, latMesh, xsplit{holePoly(xx)}, ysplit{holePoly(xx)});
+            isInHole(holeTemp == 1) = 1;
+        end
+    end
+
+    %Assign boolean values
+    polyBl(isInMain & ~isInHole) = 1;
+    
+    %Assign non-boolean values based on shapefile fields
+    if ~isempty(polyVal)
+        for hh = 1 : numel(flds(:))
+            if isfield(S(zz), flds{hh}) && ~isempty(S(zz).(flds{hh}))
+                valCurr = S(zz).(flds{hh});
+            else
+                valCurr = 1;
+            end
+            polyVal{hh}(isInMain & ~isInHole) = valCurr;
         end
     end
 end
 
+%Variable output argument:
+if nargout > 1
+    if nargout - 1 == numel(flds(:))
+        varargout = polyVal;
+    else
+        error('shapefileGeo:inputOutputMismatch', ['There are ' num2str(nargout-1) ' output arguments for fields but ' num2str(numel(flds(:))) ' fields.']);
+    end
+end
 
-%
-% write_ESRI_v4(polyBl, ESRI_hdr(lon, lat, 'corner'), fullfile(pwd,'UIB_glacier_bl.asc'), 0);
-
-% 
-% %Process one million grid points at once
-% indEachStep = 10^4;
-% 
-% %Break up grid into segments:
-% %Create indice segmens to loop over:
-% indSegments = (1:indEachStep:numel(lonMesh));
-% indSegments(end) = numel(lonMesh) + 1;
-% 
-% %Initialize output:
-% if isnumeric(S(1).(attribute)) && isscalar(S(1).(attribute))
-%     value = nan(size(lonMesh), 'single');
-% else
-%     value = cell(size(lonMesh));
-% end
-% 
-% %Enter loop:
-% for zz = 1 : numel(indSegments) - 1
-%     disp([num2str(zz) ' of ' num2str(numel(indSegments) - 1)]);
-%     
-%     indCurr = indSegments(zz) : indSegments(zz+1) - 1;
-%     
-%     SCurr = S;
-% %%COMMENTED OUT REMOVING polygons:
-% %     %Remove elements from shapefile if significantly outsides bounds:
-% %     lonMin = nanmin(nanmin(lonMesh(indCurr))) - bnd;
-% %     lonMax = nanmax(nanmax(lonMesh(indCurr))) + bnd;
-% %     latMin = nanmin(nanmin(latMesh(indCurr))) - bnd;
-% %     latMax = nanmax(nanmax(latMesh(indCurr))) + bnd;
-% %     tic
-% %     for ii = numel(SCurr) : -1 : 1
-% %         if all(SCurr(ii).(strX) < lonMin | isnan(SCurr(ii).(strX))) || all(SCurr(ii).(strX) > lonMax | isnan(SCurr(ii).(strX))) || all(SCurr(ii).(strY) < latMin | isnan(SCurr(ii).(strY))) || all(SCurr(ii).(strY) > latMax | isnan(SCurr(ii).(strY)))
-% %             SCurr(ii) = [];
-% %         end
-% %         if mod(ii,100) == 0
-% %            disp([num2str(ii) ' ' num2str(round(toc))]) 
-% %         end
-% %     end
-% 
-%     if ~isvector(shpX) || ~isvector(shpY) || length(shpX) ~= length(shpY)
-%         error('xv and yv must be vectors of the same length');
-%     end
-% 
-%     %-----------------------------
-%     % Find number of starting
-%     % indices of polygons
-%     %-----------------------------
-% 
-%     [xsplit, ysplit] = polysplit(shpX, shpY);
-%     isCw = ispolycw(xsplit, ysplit);
-%     mainPolyIndices = find(isCw);
-%     nHolesPer = diff([mainPolyIndices;length(isCw)+1]) - 1;
-% 
-% %-----------------------------
-% % Test if points are in each
-% % polygon
-% %-----------------------------
-% 
-% 
-%     in = zeros(size(lonMesh), 'single');
-%     for ipoly = 1:length(mainPolyIndices)
-%         isInMain = inpolygon(lonMesh, latMesh, xsplit{mainPolyIndices(ipoly)}, ysplit{mainPolyIndices(ipoly)});
-%         if nHolesPer(ipoly) > 0
-%             isInHole = zeros(length(lonMesh), nHolesPer(ipoly), 'single');
-%             for ihole = 1:nHolesPer(ipoly)
-%                 isInHole(:,ihole) = inpolygon(lonMesh, latMesh, xsplit{mainPolyIndices(ipoly)+ihole}, ysplit{mainPolyIndices(ipoly)+ihole});
-%             end
-% 
-%             crdTemp = isInMain & ~any(isInHole,2);
-%         else
-%             crdTemp = isInMain;
-%         end
-%         in(crdTemp == 1) = 1; 
-%     end
-%     
-% 
-% %     nclockwise = cellfun(@(x,y) length(find(ispolycw(x,y))), {SCurr.(strX)}, {SCurr.(strY)});
-% %     repVals = cellfun(@(nrep, val) repmat({val},1,nrep), num2cell(nclockwise), {SCurr.(attribute)}, 'UniformOutput', false);
-% %     repVals = [repVals{:}];
-% % 
-% %     [~, indexCell] = inpolygons(lonMesh(indCurr), latMesh(indCurr), [SCurr.(strX)], [SCurr.(strY)]);
-% % 
-% %     try
-% %         index = cell2mat(indexCell);
-% %     catch
-% %         warning('interpshapefile:overlap','Overlapping polygons; using first match for each point');
-% %         index = zeros(size(indexCell));
-% %         for icell = 1:numel(index)
-% %             index(icell) = indexCell{icell}(1);
-% %         end
-% %     end
-% % 
-% %     isGood = (index ~= 0);
-% %     if isnumeric(SCurr(1).(attribute)) && isscalar(SCurr(1).(attribute))
-% %         value(indCurr(isGood)) = cell2mat(repVals(index(isGood)));
-% %     else
-% %         value(indCurr(isGood)) = repVals(index(isGood));
-% %     end
-% end

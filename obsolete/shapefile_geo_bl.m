@@ -19,6 +19,8 @@
 % <http://www.gnu.org/licenses/>.
 
 function polyBl = shapefile_geo_bl(S, lat, lon)
+error('shapefileGeoBl:obsolete', 'This function is obsolete. Use shapefile_geo_v2 instead');
+
 %Note: same as 'interpshapefile' except that it removes shapes that are
 %sufficiently outside of lat/lon inputs before doing interpolation. Also
 %breaks interpolation up into pieces to reduce memory cost.
