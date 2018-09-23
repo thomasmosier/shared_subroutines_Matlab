@@ -55,6 +55,7 @@ if isfield(sMeta,'crd') && all(~isnan(sMeta.crd(3:4)))
     if ~isempty(regexpi(latInfo,'deg')) && ~isempty(regexpi(latInfo,'north'))
         if gcmLat(2) > gcmLat(1) %Top of array is South
             
+            warning('latUse:cropIndices', 'Check cropping indices for this case');
             if strcmpi(cropType, 'in')
                 indN = find(latEdg(2:end) <= latMax, 1, 'last');
                 indS = find(latEdg(1:end-1) >= latMin, 1, 'first');

@@ -200,7 +200,9 @@ if isfield(sPlot, 'xlabel')
 end
 
 yRng = yMx - yMn;
-if yRng  < 10
+if yRng  < 1
+    yScl = 1.01;
+elseif yRng  < 10
     yScl = 1.07;
 elseif yRng < 20
     yScl = 1.07;
@@ -229,7 +231,18 @@ elseif isnan(xMn) || isnan(xMx)
     return
 end
 if yMx > yMn
-    yLmUse = [0.97*yMn, yScl*yMx];
+    if yMn < 0
+        yMnLm = (yScl-0.8*abs(1-yScl))*yMn;
+    else
+        yMnLm = abs(2-yScl)*yMn;
+    end
+    if yMx < 0
+        yMxLm = abs(2-yScl)*yMx;
+    else
+        yMxLm = yScl*yMx;
+    end
+    
+    yLmUse = [yMnLm, yMxLm];
     if any(~isnan(yLm))
         if ~isnan(yLm(1))
             yLmUse(1) = yLm(1);

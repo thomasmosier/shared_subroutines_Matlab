@@ -15,8 +15,14 @@ end
 indOut = (find(probNNan(indOut) == probIn) : numel(probIn));
 
 if nargout > 1
-    varargout{1} = probIn(indOut);
+    probOut = nan(size(probIn));
+    probOut(indOut) = probIn(indOut);
+    
+    varargout{1} = probOut;
     if nargout > 2
-        varargout{2} = valIn(indOut);
+        valOut = nan(size(valIn));
+        valOut(indOut) = valIn(indOut);
+    
+        varargout{2} = valOut;
     end
 end

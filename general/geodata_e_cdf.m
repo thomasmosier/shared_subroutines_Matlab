@@ -64,6 +64,15 @@ if iscell(sData)
             end
             [~, griddedCdf(rUse(ll), cUse(ll), :)] = e_cdf(tempData, 'bins', nBins);
         end
+    elseif regexpbl(strType, {'average','avg'})
+        griddedCdf = nan(nLat, nLon, nBins+1);
+        for ll = 1 : nPts
+            tempCdf = nan(nMem, nBins+1, 'single');
+            for kk = 1 : nMem
+                [~, tempCdf(kk,:)] = e_cdf(squeeze(sData{kk}.(var)(:, rUse(ll), cUse(ll))), 'bins', nBins);
+            end
+            griddedCdf(rUse(ll), cUse(ll), :) = nanmean(tempCdf,1);
+        end
     else
         error('geodataECdf:unknownMethod',['Analysis method ' strType ' has not been programmed for.']);
     end

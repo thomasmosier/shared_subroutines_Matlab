@@ -204,10 +204,10 @@ end
 
 
 %%Find latitude indices to use:
-[sData.lat, latInd] = NC_lat_use_v3(ncLat, sData.attLat, sMeta);
+[sData.lat, latInd] = NC_lat_use_v4(ncLat, sData.attLat, sMeta);
 
 %%Find longitude indices to use:
-[sData.lon, lonInd] = NC_lon_use_v3(ncLon, sData.attLon, sMeta);
+[sData.lon, lonInd] = NC_lon_use_v4(ncLon, sData.attLon, sMeta);
 
 
 %%Load GCM data:

@@ -30,7 +30,7 @@ for ii = 1 : numel(varargin(:))
 end
 
 
-
+keyboard
 if iscell(sData)
     nMem = numel(sData(:));
     
@@ -109,6 +109,46 @@ if iscell(sData)
                 griddedVal(rUse(ll), cUse(ll), :), ...
                 griddedRng(rUse(ll), cUse(ll), :)] ...
                 = e_pdf(tempData, nBins, 'rng', rngCurr, 'type', pdfTyp, 'no_value', noVal);
+        end
+    elseif regexpbl(strType, {'avg','average'})
+        %Calculate range:
+        if all(isnan(rng))
+            rng = nan([2, [nLat, nLon]], 'single');
+            for ll = 1 : nPts
+                tempRng = [];
+                for kk = 1 : nMem
+                    tempRng = [tempRng; squeeze(sData{kk}.(var)(:, rUse(ll), cUse(ll)))];
+                end
+                rng(:, rUse(ll), cUse(ll)) = [nanmin(tempRng), nanmax(tempRng)];
+            end
+        end
+        szRng = size(rng);
+        
+        griddedPdf = nan(nLat, nLon, nBins);
+        griddedVal = griddedPdf;
+        griddedRng = nan(nLat, nLon, 2);
+
+        for ll = 1 : nPts
+            if isequal(szRng(end-1:end), [nLat, nLon])
+                rngCurr = rng(:, rUse(ll), cUse(ll));
+            elseif numel(rng) == 2
+                rngCurr = rng;
+            else
+                error('geodataEpdf:rngCurrSize','The range current variable has an unexpected size.');
+            end
+            
+            tmpPdf = nan(nMem, nBins);
+            tmpVal = nan(nMem, nBins);
+            tmpRng = nan(nMem, 2);
+            
+            for kk = 1 : nMem
+                [tmpPdf(kk,:), tmpVal(kk,:), tmpRng(kk,:)] ...
+                    = e_pdf(squeeze(sData{kk}.(var)(:, rUse(ll), cUse(ll))), nBins, 'rng', rngCurr, 'type', pdfTyp, 'no_value', noVal);
+            end
+
+            griddedPdf(rUse(ll), cUse(ll), :) = nanmean(tmpPdf,1);
+            griddedVal(rUse(ll), cUse(ll), :) = nanmean(tmpVal,1);
+            griddedRng(rUse(ll), cUse(ll), :) = [nanmin(tmpRng(:)), nanmax(tmpRng(:))];
         end
     else
         error('geodataECdf:unknownMethod',['Analysis method ' strType ' has not been programmed for.']);
