@@ -30,7 +30,6 @@ for ii = 1 : numel(varargin(:))
 end
 
 
-keyboard
 if iscell(sData)
     nMem = numel(sData(:));
     
