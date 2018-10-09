@@ -23,6 +23,7 @@ MarkerEdgeColor = [];
 xLm = nan(1,2);
 yLm = nan(1,2);
 locLgd = 'northwest';
+wrtFormat = {'png', 'tiff', 'eps', 'fig'};
 if numel(varargin(:)) > nTs*3
     for ii = nTs*3 + 1 : numel(varargin(:))
         if strcmpi(varargin{ii}, 'refline')
@@ -49,6 +50,8 @@ if numel(varargin(:)) > nTs*3
             yLm = varargin{ii+1};
         elseif regexpbl(varargin{ii}, {'legend','loc'}, 'and')  
             locLgd = varargin{ii+1};
+        elseif regexpbl(varargin{ii}, {'write', 'format'}, 'and')  
+            wrtFormat = varargin{ii+1};
         end
     end
 end
@@ -313,20 +316,14 @@ set(gca, ...
     'FontName'   , sPlot.font);
 
 if ~isempty(path)
-    if exist([path, '.fig'], 'file')
-        delete([path, '.fig'])
+    for ii = 1 : numel(wrtFormat)
+        if exist([path, '.' wrtFormat{ii}], 'file')
+            delete([path, '.' wrtFormat{ii}])
+        end
+        if strcmpi(wrtFormat{ii}, 'fig')
+            savefig(hFig, [path '.fig']);
+        else
+        	export_fig([path '.' wrtFormat{ii}], ['-' wrtFormat{ii}], sPlot.res);
+        end
     end
-    if exist([path, '.png'], 'file')
-        delete([path, '.png'])
-    end
-    if exist([path, '.eps'], 'file')
-        delete([path, '.eps'])
-    end
-    if exist([path, '.tiff'], 'file')
-        delete([path, '.tiff'])
-    end
-    savefig(hFig, [path '.fig']);
-    export_fig([path '.eps'],'-painters', sPlot.res);
-    export_fig([path '.png'],'-painters', sPlot.res);
-    export_fig([path '.tiff'],'-painters', sPlot.res);
 end
