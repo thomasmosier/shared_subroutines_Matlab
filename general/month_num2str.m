@@ -18,8 +18,14 @@
 % along with the Downscaling Package.  If not, see 
 % <http://www.gnu.org/licenses/>.
 
-function strMnth = month_num2str(num)
+function strMnth = month_num2str(num, varargin)
 
+typ = 'full';
+for ii = 1 : numel(varargin(:))
+    if regexpbl(varargin{ii}, 'type')
+        typ = varargin{ii+1};
+    end
+end
 
 
 strMnth = cell(numel(num),1);
@@ -52,6 +58,15 @@ for ii = 1 : numel(num)
             strMnth{ii} = 'December';
         otherwise
             strMnth{ii} = 'Unknown';
+    end
+
+    
+    if strcmpi(typ, 'first')
+        strMnth{ii} = strMnth{ii}(1);
+    elseif strcmpi(typ, 'three')
+        strMnth{ii} = strMnth{ii}(1:3);
+    elseif ~strcmpi(typ, 'full')
+        error('monthNum2Str:unknownType', ['Option for type ' typ ' has not been programmed for.']);
     end
 end
     

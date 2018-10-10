@@ -22,6 +22,7 @@ MarkerFaceColor = [];
 MarkerEdgeColor = [];
 xLm = nan(1,2);
 yLm = nan(1,2);
+lblXTick = [];
 locLgd = 'northwest';
 wrtFormat = {'png', 'tiff', 'eps', 'fig'};
 if numel(varargin(:)) > nTs*3
@@ -36,6 +37,8 @@ if numel(varargin(:)) > nTs*3
             yLab = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'xlab')
             xLab = varargin{ii+1};
+        elseif strcmpi(varargin{ii}, 'xticklabel')
+            lblXTick = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'citype')
             ciType = varargin{ii+1};
         elseif strcmpi(varargin{ii}, 'linespec')
@@ -200,6 +203,22 @@ if isfield(sPlot, 'xlabel')
     'FontName'   , sPlot.font, ...
     'FontSize'   , ftSzT, ...
     'Color', 'black');
+end
+
+%Set x-tick labels
+if ~isempty(lblXTick)
+    xTicks = get(gca,'XTick');
+
+    if numel(xTicks) == numel(lblXTick)
+        set(gca,'XTickLabel', lblXTick);
+    else
+        warning('plotTsCi:differentTickLenth', ['The x-ticks are being '...
+            'adjusted in order to set the requested x-tick labels '...
+            'because they currently have different lengths. This may '...
+            'impact placement.']);
+    	set(gca, 'XTick', linspace(xTicks(1), xTicks(end), numel(lblXTick)));
+        set(gca,'XTickLabel', lblXTick);
+    end
 end
 
 yRng = yMx - yMn;
