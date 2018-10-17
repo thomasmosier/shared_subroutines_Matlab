@@ -31,7 +31,7 @@ varDate = 'date';
 extRead = {'nc','asc','tif','img','bil','hdr'};
 
 %Check if path is file or directory
-[~,~,extTemp] = fileparts(pathData);
+[~,fileTemp,extTemp] = fileparts(pathData);
 if exist(pathData, 'dir') ~= 0 && isempty(extTemp)
     files = extract_field(dir(pathData), 'name');
     ext = blanks(0);
@@ -197,9 +197,8 @@ elseif regexpbl(ext, 'tif')
         sData.('time') = nan;
     end
    
-    
-%READ WC or PRISM binary (bil) files:
-elseif (regexpbl(ext,{'bil','hdr'}) && regexpbl(pathData, {'PRISM','worldclim','wc'})) && ~regexpbl(ext,'asc') %WorldClim binary
+%READ WorldClim, PRISM, or APHRODITE binary (bil) files:
+elseif ((regexpbl(ext,{'bil','hdr'}) && regexpbl(pathData, {'PRISM','worldclim','wc'})) || (strcmpi(ext,'numeric') && regexpbl(fileTemp, 'APHRO'))) && ~regexpbl(ext,'asc') %WorldClim binary
     sData = read_geodata_bil(pathData, varLd, lonLd, latLd, yrsLd, mnthsLd);
     
 %READ USGS IMG files

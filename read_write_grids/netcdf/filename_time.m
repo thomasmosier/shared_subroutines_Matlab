@@ -43,27 +43,27 @@ indDate = regexpi(fileData,'_');
 indPer = regexpi(fileData,'\.');
 indHyp = regexpi(fileData,'-');
 
-if regexpbl(fileData, 'aphro') %Aphrodite data
-    yr = str2double(fileData(indPer(end)+1:end));
-    yrsMod = [yr; yr];
-    mnthsMod = [1; 12];
-    daysMod = [1; 31];
+indDateCMIPTest = regexpi(fileData, '[\d]{8,8}');
+    
+
+if numel(indDateCMIPTest) >= 2 && ~isempty(indHyp) %CMIP5 NetCDF format
+    strDate = fileData(indDate(end)+1:end);
+    indHyp = regexpi(strDate,'-');
+    yrsMod   = [str2double(strDate(1:4)); str2double(strDate(indHyp + 1 : indHyp + 4))];
+    mnthsMod = [str2double(strDate(5:6)); str2double(strDate(indHyp + 5 : indHyp + 6))];
+    if numel(strDate) > 7 && ~isnan(str2double(strDate(7)))
+        daysMod = [str2double(strDate(7:8)); str2double(strDate(indHyp +7 : indHyp +8))];
+    end
 elseif regexpbl(fileData, {'har'})
     yr = str2double(fileData(indDate(end)+1:end));
     yrsMod = [yr; yr];
     mnthsMod = [1; 12];
     daysMod = [1; 31];
-elseif ~isempty(indDate) && isempty(indPer) && ~isempty(indHyp) %CMIP5 NetCDF format
-    indDateTest = regexpi(fileData, '[\d]{4,8}');
-    if ~isempty(indDateTest)
-        strDate = fileData(indDate(end)+1:end);
-        indHyp = regexpi(strDate,'-');
-        yrsMod   = [str2double(strDate(1:4)); str2double(strDate(indHyp + 1 : indHyp + 4))];
-        mnthsMod = [str2double(strDate(5:6)); str2double(strDate(indHyp + 5 : indHyp + 6))];
-        if numel(strDate) > 7 && ~isnan(str2double(strDate(7)))
-            daysMod = [str2double(strDate(7:8)); str2double(strDate(indHyp +7 : indHyp +8))];
-        end
-    end
+elseif regexpbl(fileData, 'aphro') %Aphrodite data
+    yr = str2double(fileData(indPer(end)+1:end));
+    yrsMod = [yr; yr];
+    mnthsMod = [1; 12];
+    daysMod = [1; 31];
 elseif ~isempty(indDate) && isempty(indPer) && isempty(indHyp) %Maybe ASCII format?
     %Find contiguous numbers that occur after underscores:
     indNumb = regexpi(fileData, '\d');

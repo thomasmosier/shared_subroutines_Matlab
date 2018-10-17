@@ -4,10 +4,6 @@ varLon = 'longitude';
 varLat = 'latitude';
 varDate = 'date';
 
-if ~regexpbl(pathData, {'PRISM','wc','worldclim'}) 
-    error('readGeodataBil:unknownType', [pathData ...
-        ' is not PRISM or Wordclim and has not been programmed for.']);
-end
 
 if regexpbl(pathData, 'PRISM')
     if regexpbl(varReq,{'tmp','tas','tmean'})   %Necessary because WorldClim uses 'tmean' instead of 'tmn'.
@@ -41,6 +37,19 @@ elseif regexpbl(pathData, {'wc','worldClim'})
     end
     
     type = 'WorldClim';
+elseif regexpbl(pathData, 'APHRO')
+    if regexpbl(varReq,{'tmp','tas','tmean'})   %Necessary because WorldClim uses 'tmean' instead of 'tmn'.
+        varLd = 'tave';
+    elseif regexpbl(varReq,'pre') || strcmpi(varReq,'pr')
+        varLd = 'precip';
+    else
+        error('readGeodataBil:unknownAPHROvar',[varReq ' is an '...
+            'unknown variable for the APHRODITE dataset. Program for this if correct.']);
+    end
+    
+    type = 'APHRODITE';
+else
+    error('readGeodataBil:unknownSource', ['The file ' pathData ' does not match any programmed binary file sources (WorldClim, PRISM, or APHRODITE).'])
 end
 
 %Initialize output:
@@ -59,31 +68,30 @@ end
 
 %Check naming and find file for current month:
 if strcmpi(type, 'PRISM')
-
     if mnthsLd < 10
         mnthStr = ['0' num2str(mnthsLd)];
     else
         mnthStr = num2str(mnthsLd);
     end
 
-    fileWcHdr = dir(fullfile(pathData, strcat('PRISM_', varLd, '*', mnthStr, '_bil.hdr')));
-    fileWcData = dir(fullfile(pathData, strcat('PRISM_', varLd, '*', mnthStr, '_bil.bil')));
+    filePrismHdr = dir(fullfile(pathData, strcat('PRISM_', varLd, '*', mnthStr, '_bil.hdr')));
+    filePrismData = dir(fullfile(pathData, strcat('PRISM_', varLd, '*', mnthStr, '_bil.bil')));
     
-    fileWcData = extract_field(fileWcData, 'name');
+    filePrismData = extract_field(filePrismData, 'name');
 
     %Assign date info based on whether files are time-series or not
-    indUnd = regexpi(fileWcData{1}, '_');
-    numTest = fileWcData{1}(indUnd(end-1)+1 : indUnd(end)-1);
+    indUnd = regexpi(filePrismData{1}, '_');
+    numTest = filePrismData{1}(indUnd(end-1)+1 : indUnd(end)-1);
     if numel(numTest) == 2
         prismType = 'clim';
     elseif numel(numTest) == 6
         prismType = 'ts';
 
-        dateAll = nan(numel(fileWcData),2);
+        dateAll = nan(numel(filePrismData),2);
         for zz = 1 : numel(dateAll(:,1))
-            indUnd = regexpi(fileWcData{zz}, '_');
-            dateAll(zz,1) = str2double(fileWcData{zz}(indUnd(end-1)+1 : indUnd(end-1)+4));
-            dateAll(zz,2) = str2double(fileWcData{zz}(indUnd(end-1)+5 : indUnd(end)-1));
+            indUnd = regexpi(filePrismData{zz}, '_');
+            dateAll(zz,1) = str2double(filePrismData{zz}(indUnd(end-1)+1 : indUnd(end-1)+4));
+            dateAll(zz,2) = str2double(filePrismData{zz}(indUnd(end-1)+5 : indUnd(end)-1));
         end
 
         %Select which to keep:
@@ -92,7 +100,7 @@ if strcmpi(type, 'PRISM')
         indMnthKeep = find(dateAll(:,2) == mnthsLd);
         indKeep = intersect(indYrKeep, indMnthKeep);
         if numel(indKeep) > 1
-            fileWcData = fileWcData(indKeep);
+            filePrismData = filePrismData(indKeep);
         else
             error('readGeodataBil:noPrism','No PRISM files were found for the requested dates.');
         end
@@ -101,26 +109,26 @@ if strcmpi(type, 'PRISM')
     end
 
     %Read test header:
-    [hdrESRIRaw, metaESRI, bits] = read_PRISM_bin_hdr(fullfile(pathData,fileWcHdr{ii}));
-    for zz = 1 : numel(fileWcData)
+    [hdrESRIRaw, metaHdr, bits] = read_PRISM_bin_hdr(fullfile(pathData,filePrismHdr{1}));
+    for zz = 1 : numel(filePrismData)
         if all(~isnan([lonLd(:)', latLd(:)']))
-            [dataCurr, hdrESRI, ~, ~] = read_PRISM_bin_data(fullfile(pathData,fileWcData{zz}), hdrESRIRaw, bits, [lonLd(:)', latLd(:)'], varReq, 'in');
+            [dataCurr, hdrESRI, ~, ~] = read_PRISM_bin_data(fullfile(pathData,filePrismData{zz}), hdrESRIRaw, bits, [lonLd(:)', latLd(:)'], varReq, 'in');
         else
-            [dataCurr, hdrESRI, ~, ~] = read_PRISM_bin_data(fullfile(pathData,fileWcData{zz}), hdrESRIRaw, bits, [], varReq, []);
+            [dataCurr, hdrESRI, ~, ~] = read_PRISM_bin_data(fullfile(pathData,filePrismData{zz}), hdrESRIRaw, bits, [], varReq, []);
         end
 
         if zz == 1
-            sData.(varReq) = nan([numel(fileWcData), hdrESRI(2), hdrESRI(1)], 'single');
-            dateLoad = nan([numel(fileWcData), 3]);
+            sData.(varReq) = nan([numel(filePrismData), hdrESRI(2), hdrESRI(1)], 'single');
+            dateLoad = nan([numel(filePrismData), 3]);
         end
 
         %Get date:
-        indUnd = regexpi(fileWcData{zz}, '_');
+        indUnd = regexpi(filePrismData{zz}, '_');
         if regexpbl(prismType, 'clim')
-            dateLoad(zz,2) = str2double(fileWcData{zz}(indUnd(end-1)+1 : indUnd(end)-1));
+            dateLoad(zz,2) = str2double(filePrismData{zz}(indUnd(end-1)+1 : indUnd(end)-1));
         else
-            dateLoad(zz,1) = str2double(fileWcData{zz}(indUnd(end-1)+1 : indUnd(end-1)+4));
-            dateLoad(zz,2) = str2double(fileWcData{zz}(indUnd(end-1)+5 : indUnd(end)-1));
+            dateLoad(zz,1) = str2double(filePrismData{zz}(indUnd(end-1)+1 : indUnd(end-1)+4));
+            dateLoad(zz,2) = str2double(filePrismData{zz}(indUnd(end-1)+5 : indUnd(end)-1));
         end
 
         sData.(varReq)(zz,:,:) = dataCurr;
@@ -128,12 +136,12 @@ if strcmpi(type, 'PRISM')
 
 
 %         %If temperature, convert PRISM from Fahrenheit to Celsius:
-%         if regexpbl(wcVar, {'tmean', 'tmin', 'tmax'}) || regexpbl(varLd, {'tmp','tas', 'tmn', 'tmx'})
+%         if regexpbl(PrismVar, {'tmean', 'tmin', 'tmax'}) || regexpbl(varLd, {'tmp','tas', 'tmn', 'tmx'})
 %             sData.(varLd) = (5/9)*(sData.(varLd) - 32);
 %         end
 
     if regexpbl(prismType, 'clim')
-        if ~issorted(dateLoad(:,2), 'rows');
+        if ~issorted(dateLoad(:,2), 'rows')
             [dateLoad(:,2), indSort] = sortrows(dateLoad(:,2));
             sData.(varReq) = sData.(varReq)(indSort, :, :);
         end
@@ -156,6 +164,7 @@ if strcmpi(type, 'PRISM')
         sData.info = {'source','PRISM'};
         sData.attTime = [sData.attTime; {'type', 'time-series'}];
     end
+    
 %%WORLDCLIM
 elseif strcmpi(type, 'WorldClim')
     %Check if this WorldClim dataset includes hyphen or not:
@@ -185,7 +194,7 @@ elseif strcmpi(type, 'WorldClim')
     fileWcData = extract_field(fileWcData, 'name');
     
     for ii = 1 : numel(fileWcData(:))
-        [hdrESRI, metaESRI] = read_wc_bin_hdr(fullfile(pathData,fileWcHdr{ii}));
+        [hdrESRI, metaHdr] = read_wc_bin_hdr(fullfile(pathData,fileWcHdr{ii}));
 
         if all(~isnan([lonLd(:)', latLd(:)']))
             [dataTemp, hdrESRI, ~, ~] = read_wc_bin_data_v2(fullfile(pathData,fileWcData{ii}), hdrESRI, [lonLd(:)', latLd(:)'], varReq, 'in');
@@ -205,7 +214,46 @@ elseif strcmpi(type, 'WorldClim')
     
     sData.info = {'source','WorldClim'};
     sData.attTime = [sData.attTime; {'type', 'climatology'}];
+    
+%APHRODITE    
+elseif strcmpi(type, 'APHRODITE')
+    %Find files:
+    fileAphroData = dir(fullfile(pathData, strcat('APHRO_', '*')));
+    fileAphroData = extract_field(fileAphroData, 'name');
+    
+    %Get years
+    yrsData = nan(numel(fileAphroData), 1);
+    for ii = 1 : numel(fileAphroData)
+        yrsData(ii) = str2double(fileAphroData{ii}(end-3:end));
+    end
+    indUse = find(yrsData >= min(yrsLd) & max(yrsLd));
+    
+    if numel(indUse) < max(yrsLd) - min(yrsLd) + 1
+        warning('readGeodataBil:missingYrs',['The requested year range is ' ...
+            num2str(min(yrsLd)) ' thru '  num2str(max(yrsLd)) ...
+            ' but the years found are ' num2str(min(yrsData(indUse))) ...
+            ' thru ' num2str(max(yrsData(indUse))) '.'])
+    end
+    
+    fileAphroData = fileAphroData(indUse);
+%     yrsData = yrsData(indUse);
+    
+    dateLoad = nan(0,3,'single');
+    for ii = 1 : numel(fileAphroData)
+        pathAphro = fullfile(pathData, fileAphroData{ii});
+        [dataCurr, dateCurr, hdrESRI, metaHdr, ~, ~] = read_APHRODITE_bin(pathAphro, [lonLd(:)', latLd(:)'], mnthsLd, 'in');
+        
+        if ii == 1
+            sData.(varReq) = nan([0, hdrESRI(2), hdrESRI(1)], 'single');
+        end
+        
+        sData.(varReq) = cat(1, sData.(varReq), dataCurr);
+        dateLoad = [dateLoad; dateCurr];
+    end
+    
+    sData.info = {'source','APHRODITE'};
+    sData.attTime = [sData.attTime; {'type', 'time-series'}];
 end
 
 sData.(varDate) = dateLoad;
-[sData.(varLat), sData.(varLon)] = ESRI_hdr2geo(hdrESRI, metaESRI);
+[sData.(varLat), sData.(varLon)] = ESRI_hdr2geo(hdrESRI, metaHdr);
