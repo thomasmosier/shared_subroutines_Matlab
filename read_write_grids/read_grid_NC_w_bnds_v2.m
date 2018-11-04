@@ -303,7 +303,9 @@ if ~isempty(varT)
     sData.date = sData.date(indTime,:);
 else
     indTime = nan(2,1);
-    warning('readGridNcWBnds:noTime','No time variable was found in the NetCDF file being loaded.');
+    if ~(any(strcmpi(varLd, 'gp')) || any(strcmpi(varLd, 'z')) || any(strcmpi(varLd, 'dem')) || any(strcmpi(varLd, 'orog')))
+        warning('readGridNcWBnds:noTime','No time variable was found in the NetCDF file being loaded.');
+    end
 end
 
 %Loop over variables to load

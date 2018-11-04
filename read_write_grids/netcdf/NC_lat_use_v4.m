@@ -55,7 +55,6 @@ if isfield(sMeta,'crd') && all(~isnan(sMeta.crd(3:4)))
     if ~isempty(regexpi(latInfo,'deg')) && ~isempty(regexpi(latInfo,'north'))
         if gcmLat(2) > gcmLat(1) %Top of array is South
             
-            warning('latUse:cropIndices', 'Check cropping indices for this case');
             if strcmpi(cropType, 'in')
                 indN = find(latEdg(2:end) <= latMax, 1, 'last');
                 indS = find(latEdg(1:end-1) >= latMin, 1, 'first');
@@ -66,6 +65,8 @@ if isfield(sMeta,'crd') && all(~isnan(sMeta.crd(3:4)))
                 error('cro_geodata:unknowntype', ['Method type ' cropType ' has not been programmed for.']);
             end
             
+%             gcmLat(indS)
+%             gcmLat(indN)
 %             latEdg(indS)
 %             latEdg(indN+1)
             
@@ -90,34 +91,6 @@ if isfield(sMeta,'crd') && all(~isnan(sMeta.crd(3:4)))
             
             gcmLatUseInd = (indS : indN);
             
-            
-            
-%             if strcmpi(cropType, 'in')
-%                 indN = find(latEdg <= latMax, 1, 'first');
-%                 indS = find(latMin <= latEdg, 1, 'last');
-%             elseif strcmpi(cropType, 'out')
-%                 indN = find(latEdg >= latMax, 1, 'last');
-%                 indS = find(latMin >= latEdg, 1, 'first');
-%             else
-%                 error('cro_geodata:unknowntype', ['Method type ' cropType ' has not been programmed for.']);
-%             end
-%             
-%             if isempty(indS)
-%                 indS = 1; 
-%             end
-%             if isempty(indN)
-%                 indN = numel(gcmLat); 
-%             end
-%             
-%             %Find latitude indices that are within the desired region:
-%             indS = find(latEdg(1:end-1) <= sMeta.crd(3), 1, 'last');
-%             if isempty(indS)
-%                 indS = 1; 
-%             end
-%             indN = find(latEdg(2:end) >= sMeta.crd(4), 1, 'first');
-%             if isempty(indN)
-%                 indN = numel(gcmLat); 
-%             end
 
 %             %Indices of GCM cells to use, including double wide border
 %             gcmLatUseInd = (indS - frame : indN - 1 + frame); %Empirically this provides two centroids outside of requested bounds
@@ -131,6 +104,11 @@ if isfield(sMeta,'crd') && all(~isnan(sMeta.crd(3:4)))
             else
                 error('cro_geodata:unknowntype', ['Method type ' cropType ' has not been programmed for.']);
             end
+            
+%             gcmLat(indS)
+%             gcmLat(indN)
+%             latEdg(indS+1)
+%             latEdg(indN)
             
             if isempty(indN)
                 indN = 1; 
@@ -152,23 +130,6 @@ if isfield(sMeta,'crd') && all(~isnan(sMeta.crd(3:4)))
             end
             
             gcmLatUseInd = (indN : indS);
-%             %Find latitude indices that are within the desired region:
-%             indN = find(latEdg(1:end-1) >= sMeta.crd(4), 1, 'last');
-%             if isempty(indN)
-%                 indN = 1; 
-%             end
-%             indS = find(latEdg(2:end) <= sMeta.crd(3), 1, 'first');
-%             if isempty(indS)
-%                 indS = numel(gcmLat); 
-%             end
-            
-%             %Indices of GCM cells to use, including border
-%             if frame == 0
-%                 gcmLatUseInd = (indN : indS);
-%             else
-%                 gcmLatUseInd = (indN + 1 - frame : indS + frame); %Empirically this provides frame centroids outside of requested bounds
-%             end
-            
         else
             error('NC_lat_use:noChange',['The spacing between latitudes '...
                 'in the current NetCDF dataset appears to be 0.  This case has '...
