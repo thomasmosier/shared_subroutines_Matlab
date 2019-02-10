@@ -5,6 +5,7 @@ lonWgt = [];
 latWgt = [];
 timeStepUse = [];
 varTStep = [];
+timeCombine = [];
 for ii = 1 : numel(varargin(:))
     if regexpbl(varargin{ii}, {'area', 'wgt'}, 'and')
         blWgt = 1;
@@ -13,6 +14,8 @@ for ii = 1 : numel(varargin(:))
     elseif regexpbl(varargin{ii}, {'time', 'convert'}, 'and')
         timeStepUse = varargin{ii+1};
         varTStep  = varargin{ii+2};
+    elseif regexpbl(varargin{ii}, {'time', 'combine'}, 'and')
+        timeCombine = 1;
     end
 end
 clear ii
@@ -97,3 +100,28 @@ for kk = 1 : nMem
     end
 end
 clear kk
+
+
+%If requested, combine input data along time dimension
+varTime = 'time';
+varDate = 'date';
+varTimeBnds = 'time_bnds';
+
+if timeCombine
+    sTemp = sData{1};
+    
+    if numel(sData(:)) > 1
+        for ii = 2 : numel(sData(:))
+            sTemp.(varOut) = cat(1, sTemp.(varOut), sData.(varOut));
+            sTemp.(varTime) = cat(1, sTemp.(varTime), sData.(varTime));
+            sTemp.(varDate) = cat(1, sTemp.(varDate), sData.(varDate));
+            if isfield(sTemp, varTimeBnds)
+                sTemp.(varTimeBnds) = cat(1, sTemp.(varTimeBnds), sData.(varTimeBnds));
+            end
+        end
+        
+        sData = sTemp;
+        clear sTemp
+    end
+
+end
