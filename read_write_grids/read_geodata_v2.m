@@ -90,7 +90,6 @@ if blDisp == 1
 end
     
     
- 
 %READ NetCDF files:
 if regexpbl(ext, 'nc')
     if blMult == 1
@@ -174,15 +173,18 @@ if regexpbl(ext, 'nc')
         sData.('time') = sData.('time')(indKeep);
         sData.(varDate) = sData.(varDate)(indKeep,:);
     end
+
     
     %Assign input variable name to requested variable name
-    if ~isequal(varUse, varLd)
+    if ~isequal(varUse, varLd) %Only perform this replacement if there is a variable discrepency
         fldsAll = fieldnames(sData);
-        for ii = numel(fldsAll) : -1 : 1
-            if regexpbl(fldsAll{ii}, varUse)
-                fldNew = strrep(fldsAll{ii}, varUse, varLd);
-                sData.(fldNew) = sData.(fldsAll{ii});
-                sData = rmfield(sData, fldsAll{ii});
+        if ~any(strcmpi(fldsAll, varLd)) && any(strcmpi(fldsAll, varUse)) %Only perform this replacement if there is a variable discrepency
+            for ii = numel(fldsAll) : -1 : 1
+                if regexpbl(fldsAll{ii}, varUse)
+                    fldNew = strrep(fldsAll{ii}, varUse, varLd);
+                    sData.(fldNew) = sData.(fldsAll{ii});
+                    sData = rmfield(sData, fldsAll{ii});
+                end
             end
         end
     end
