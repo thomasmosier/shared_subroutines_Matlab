@@ -112,11 +112,11 @@ if timeCombine
     
     if numel(sData(:)) > 1
         for ii = 2 : numel(sData(:))
-            sTemp.(varOut) = cat(1, sTemp.(varOut), sData.(varOut));
-            sTemp.(varTime) = cat(1, sTemp.(varTime), sData.(varTime));
-            sTemp.(varDate) = cat(1, sTemp.(varDate), sData.(varDate));
+            sTemp.(varOut)  = cat(1, sTemp.( varOut), sData{ii}.( varOut));
+            sTemp.(varTime) = cat(1, sTemp.(varTime), sData{ii}.(varTime));
+            sTemp.(varDate) = cat(1, sTemp.(varDate), sData{ii}.(varDate));
             if isfield(sTemp, varTimeBnds)
-                sTemp.(varTimeBnds) = cat(1, sTemp.(varTimeBnds), sData.(varTimeBnds));
+                sTemp.(varTimeBnds) = cat(2, sTemp.(varTimeBnds), sData{ii}.(varTimeBnds));
             end
         end
         
