@@ -317,7 +317,8 @@ elseif regexpbl(wrtTyp,{'netCDF','nc'})
         
         %Find time step and use to get date for creating name
         %(Different date naming depending on monthly or daily data)
-        if isfield(sData, 'date')
+        if isfield(sData, varDate)
+            sData.(varDate) = floor(sData.(varDate));
             if all(ismember(sData.(varDate)(:,2), mnthsWrt) ~= 0) && (numel(sData.(varDate)(1,:)) == 2 || all(sData.(varDate)(:,3) == sData.(varDate)(1,3)))
                 timeStep = 'monthly';
             elseif numel(sData.('date')(1,:)) == 3 && mode(abs(diff(sData.date(:,3)))) == 1
@@ -372,19 +373,24 @@ elseif regexpbl(wrtTyp,{'netCDF','nc'})
     
         %Create file name:
         if regexpbl(timeStep, 'daily')
-            if dayStart < 10
-                dayStart = ['0' num2str(dayStart)];
+            indDate8 = regexpi(fileIn, '\d{8}');
+            if isempty(indDate8) || numel(indDate8) ~= 2
+                if dayStart < 10
+                    dayStart = ['0' num2str(dayStart)];
+                else
+                    dayStart = num2str(dayStart);
+                end
+                if dayEnd < 10
+                    dayEnd = ['0' num2str(dayEnd)];
+                else
+                    dayEnd = num2str(dayEnd);
+                end
+
+                fileIn = [fileIn, '_' num2str(yrsWrt(1)), mnthStart dayStart '-', ...
+                    num2str(yrsWrt(2)), mnthEnd, dayEnd, extNC];
             else
-                dayStart = num2str(dayStart);
+                fileIn = [fileIn, extNC];
             end
-            if dayEnd < 10
-                dayEnd = ['0' num2str(dayEnd)];
-            else
-                dayEnd = num2str(dayEnd);
-            end
-            
-            fileIn = [fileIn, '_' num2str(yrsWrt(1)), mnthStart dayStart '-', ...
-                num2str(yrsWrt(2)), mnthEnd, dayEnd, extNC];
         elseif regexpbl(timeStep, 'monthly')
             fileIn = [fileIn, '_' num2str(yrsWrt(1)), mnthStart '-', ...
                 num2str(yrsWrt(2)), mnthEnd, extNC];
