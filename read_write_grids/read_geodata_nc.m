@@ -40,19 +40,30 @@ end
 
 filesAll = extract_field(dir(fullfile(foldNc, ['*' extNc])), 'name');
 
+%Remove hidden files:
+for ii = numel(filesAll(:)) : -1 : 1
+    if regexpbl(filesAll{ii}(1:2), '._')
+        filesAll(ii) = [];
+    end
+end
+
 %Keep only files that have the same root as the given file:
+%Find root (based on first file)
 indUnd = regexpi(filesAll{1}, '_');
 if ~isempty(indUnd)
     fileNmRt = filesAll{1}(1:indUnd(end));
 else
     fileNmRt = filesAll{1};
 end
-
+%Remove any files without underscore
 for ii = numel(filesAll(:)) : -1 : 1
     if ~regexpbl(filesAll{ii}, fileNmRt)
         filesAll(ii) = [];
     end
 end
+
+
+
 
 %Test type of NetCDf file (try to find function that can read time from name:
 [yrsMod1, mnthsMod1, ~] = filename_time(pathNc);
