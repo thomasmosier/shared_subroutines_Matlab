@@ -27,12 +27,20 @@ else
 end
 
 
+latComb = [lat1(:) ; lat2(:) ];
+lonComb = [lon1(:)', lon2(:)'];
+
+[~, iLatO, ~] = unique(round2(latComb, ordLat));
+[~, iLonO, ~] = unique(round2(lonComb, ordLon));
+
+latO = latComb(iLatO);
+lonO = lonComb(iLonO);
+    
+
 if blOut == 1 && ~isempty(varargin(:))
     data1 = varargin{1};
     data2 = varargin{2};
-    
-    latO = flipud(unique([lat1(:); lat2(:)]));
-    lonO = unique([lon1(:)', lon2(:)']);
+
         
     if numel(lat1) ~= numel(lat2)
         if numel(lat1) < numel(lat2)
