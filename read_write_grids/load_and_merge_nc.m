@@ -56,15 +56,66 @@ for ii = 1 : length(filesAll(:))
         end
 
         for jj = 1 : numel(nmsTemp)
-            nDimCurr = ndims(sDataTemp.(nmsTemp{jj}));
+            varCurr = nmsTemp{jj};
+            nDimCurr = ndims(sDataTemp.(varCurr));
 
             if nDimCurr == 2 %2D cases
-                indTimeCurr = find(size(sDataTemp.(nmsTemp{jj})) == numel(sDataTemp.time));
+                indTimeCurr = find(size(sDataTemp.(varCurr)) == numel(sDataTemp.time));
                 if ~isempty(indTimeCurr)
-                    sNc.(nmsTemp{jj}) = cat(indTimeCurr, sNc.(nmsTemp{jj}), sDataTemp.(nmsTemp{jj}));
+                    sNc.(varCurr) = cat(indTimeCurr, sNc.(varCurr), sDataTemp.(varCurr));
                 end               
             elseif nDimCurr == 3 %3D cases (time always first)
-                sNc.(nmsTemp{jj}) = cat(1, sNc.(nmsTemp{jj}), sDataTemp.(nmsTemp{jj}));
+                szAsn = size(sNc.(varCurr));
+                szGet = size(sDataTemp.(varCurr));
+                
+                if isequal(szAsn(2:3), szGet(2:3)) %Grids are same size
+                    sNc.(varCurr) = cat(1, sNc.(varCurr), sDataTemp.(varCurr));
+                    
+                else %Grids not same size
+                    varLd = nmsTemp;
+                    %Find latitude variable:
+                    varLatTest = {'lat','latitude','row','y','Lat','Latitude','Row','Y','LAT','LATITUDE','ROW'};
+                    varLat = blanks(0);
+                    for zz = 1 : numel(varLd)
+                        if any(strcmpi(varLatTest, varLd{zz}))
+                            varLat = varLd{zz};
+                            varLd(zz) = []; 
+                            break
+                        end
+                    end
+
+                    if isempty(varLat)
+                       error('readGridNcWBnds:noLat',['No latitude variable was found in the NetCDF file being loaded: ' path]) 
+                    end
+
+                    %Find longitude variable:
+                    varLonTest = {'lon','longitude','col','x','Lon','Longitude','Col','X','LON','LONGITUDE','COL'};
+                    varLon = blanks(0);
+                    for zz = 1 : numel(varLd)
+                        if any(strcmpi(varLonTest, varLd{zz}))
+                            varLon = varLd{zz};
+                            varLd(zz) = []; 
+                            break
+                        end
+                    end
+
+                    if isempty(varLon)
+                       error('readGridNcWBnds:noLon',['No longitude variable was found in the NetCDF file being loaded: ' path]) 
+                    end
+                    
+                    [blDiff, sDataTemp.(varLon), sDataTemp.(varLat), sDataTemp.(varCurr), sNc.(varCurr)] = crd_within(sDataTemp.(varLon), sNc.(varLon), sDataTemp.(varLat), sNc.(varLat), sDataTemp.(varCurr), sNc.(varCurr));
+                
+                    if blDiff == 0
+                        warning('dsLdFlds:grids', ...
+                            ['The two grids being stitched are not the same. '...
+                            'This will lead to invalid results and probably a script error.']);
+                    else
+                        sNc.(varLon) = sDataTemp.(varLon); 
+                        sNc.(varLat) = sDataTemp.(varLat);
+                    end
+                    
+                    sNc.(varCurr) = cat(1, sNc.(varCurr), sDataTemp.(varCurr));
+                end
             end
         end
     end
