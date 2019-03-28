@@ -59,7 +59,10 @@ for ii = 1 : numel(xCl(:))
         
         %Use the points to the left and right of this one to decide if CW
         %or CCW
-        if indLl == 1
+        if numel(xCl{ii}) == 1
+            indPrr = 1;
+            indAft = 1;
+        elseif indLl == 1
             indPrr = numel(yCl{ii});
             indAft = 2;
         elseif indLl == numel(yCl{ii})
@@ -69,6 +72,7 @@ for ii = 1 : numel(xCl(:))
             indPrr = indLl-1;
             indAft = indLl+1;
         end
+        
         if xCl{ii}(indPrr) < xCl{ii}(indAft) %CCW
             cw(ii) = 0;
         elseif xCl{ii}(indPrr) > xCl{ii}(indAft) %CW
