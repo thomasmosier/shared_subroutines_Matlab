@@ -32,7 +32,7 @@ else
     end
 
     if ~isempty(indHG)
-        if regexpbl(nm,{'Amon','historic'}) && numel(indHG) > 1
+        if regexpbl(nm,{'amon','historic','day','orog'}) && numel(indHG) > 1
             nm = nm(indHG(2)+1:indHG(end)-1);
             nmDisp = ['CMIP5 GCM ' nm];
         else
