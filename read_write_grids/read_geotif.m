@@ -4,8 +4,13 @@ function sData = read_geotif(pathData, varLd, lonLd, latLd, fr, cropType)
 sData = struct;
 
 %METHOD USING 'geoimread' (From File Exchange)
-[sData.(varLd),sData.longitude,sData.latitude,~] = geoimread(pathData);
+[sData.(varLd),sData.longitude,sData.latitude,I] = geoimread(pathData);
     sData.latitude = sData.latitude(:);
+    
+%If geotiff is in UTM, get UTM zone
+if regexpbl(I.Projection, 'UTM')
+    sData.utmZone = sprintf('%02d %s', I.Zone, I.Projection(end:end));
+end
 
 %Crop:
 if all(~isnan(lonLd)) && all(~isnan(latLd))
