@@ -26,9 +26,14 @@ end
 [foldNc, ~, extNc] = fileparts(pathNc);
 
 if isempty(extNc) && exist(pathNc, 'dir')
-    disp('The input path is a directory. It is being searched for NetCDF files.');
     foldNc = pathNc;
-    pathNc = extract_field(dir(fullfile(foldNc, '*.nc')), 'name');
+    foldTemp = dir(fullfile(foldNc, '*.nc'));
+    if isstruct(foldTemp)
+        pathNc = extract_field(foldTemp, 'name');
+    else
+        pathNc = cell(foldTemp);
+    end
+    disp(['The input path is a directory. ' num2str(numel(pathNc(:))) ' NetCDF files are being searched and potentially loaded.']);
     pathNc = fullfile(foldNc, pathNc{1});
     extNc = '.nc';
 end
@@ -79,7 +84,7 @@ if numel(filesAll(:)) > 1 && blMult == 1
             'NetCDF file is unknown. This is due to the format of the file string.' char(10) ...
             'The function will not attempt to merge multiple files.' char(10) ...
             'Current file = ' pathNc]);
-    elseif all(~isnan(yrBnds)) && (min2d(yrBnds) < yrsMod1(1) || max2d(yrBnds) > yrsMod1(2)) %Search for multiple files to merge
+    elseif all(~isnan(yrBnds)) && (min2d(yrBnds) < yrsMod1(1) || max2d(yrBnds) > yrsMod1(2)) || all(isnan(yrBnds)) %Search for multiple files to merge
         %Choose which files to load and in which order (ensure data are
         %continuous)
         modUse = zeros(length(filesAll(:)),4);
@@ -116,8 +121,8 @@ if numel(filesAll(:)) > 1 && blMult == 1
         filesAll = filesAll(ordStrtGcm);
         modUse = modUse(ordStrtGcm,:);
         
-        if any(modUse(2:end,1) ~= modUse(1:end-1,2)+1)
-           warning('read_geodata:dataGap', ['There appears to be a gap '...
+        if any(modUse(2:end,1) ~= modUse(1:end-1,2)+1) && any(diff(modUse(1:end,1)) ~= 0) || all(diff(modUse(1:end,1)) ~= 0) && any(diff(modUse(1:end,2)) ~= 1)
+           warning('read_geodata:dataGap', ['There may be a gap '...
                'in the NetCDF data being loaded from ' foldNc '.']); 
         end
 
