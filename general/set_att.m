@@ -30,5 +30,5 @@ elseif sum2d(ind) > 1
 elseif sum2d(ind) == 0
     warning('set_att:none', ['No attributes labeled ' char(39) strAtt char(39) ' were found.']);
 else
-    warning('set_att:none', ['Unkown value returned from strcmpi.']);
+    warning('set_att:none', 'Unknown value returned from strcmpi.');
 end
