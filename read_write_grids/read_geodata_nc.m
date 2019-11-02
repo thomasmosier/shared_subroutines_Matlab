@@ -33,6 +33,12 @@ if isempty(extNc) && exist(pathNc, 'dir')
     else
         pathNc = cell(foldTemp);
     end
+    %Remove hidden files:
+    for ii = numel(pathNc(:)) : -1 : 1
+        if regexpbl(pathNc{ii}(1:2), '._')
+            pathNc(ii) = [];
+        end
+    end
     disp(['The input path is a directory. ' num2str(numel(pathNc(:))) ' NetCDF files are being searched and potentially loaded.']);
     pathNc = fullfile(foldNc, pathNc{1});
     extNc = '.nc';
