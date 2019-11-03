@@ -261,26 +261,39 @@ for mm = 1 : nFit
             sTerm = (nanstd(mod)/nanstd(obs)-1)^2;
             bTerm = (nanmean(mod)/nanmean(obs)-1)^2;
             
-            if regexpbl(strEval{mm},'KGEr') %r correlation term: 
+            if strcmpi(strEval{mm},'KGEr') %r correlation term: 
                 statOut(mm) = sqrt(rTerm);
-            elseif regexpbl(strEval{mm},'KGEs') %standard deviation term
+            elseif strcmpi(strEval{mm},'KGEs') %standard deviation term
                 statOut(mm) = sqrt(sTerm);
-            elseif regexpbl(strEval{mm},'KGEb') %Bias term
+            elseif strcmpi(strEval{mm},'KGEb') %Bias term
                 statOut(mm) = sqrt(bTerm);
             else
                 statOut(mm) = sqrt(rTerm + sTerm + bTerm);
             end
         end
     elseif regexpbl(strEval{mm},{'Parajka','MODIS'})
+        %For testing:
+        nLoc = numel(obs(1,:,:));
+        %sum2d(isnan(squeeze(obs(1,:,:))))
+        
         %Find number of pixels that are glaciated or have permanent snow cover
         %(i.e. always 100 or nan in MODIS observations)
         szGrid = size(squeeze(obs(1,:,:)));
         subGlac = zeros(prod(szGrid),1, 'single');
-        nGlacThresh = 0.01*numel(obs(:,1,1));
+        fracGlacThresh = 0.90;
         cntr = 1;
+        fracCov = nan(szGrid);
         for jj = 1 : numel(obs(1,:,1))
             for ii = 1 : numel(obs(1,1,:))
-                if sum2d(~isnan(obs(:,jj,ii)) & obs(:,jj,ii) ~= 100) < nGlacThresh
+                nObsCurr = sum(~isnan(obs(:,jj,ii)));
+%                 if nObsCurr ~= 0
+%                     disp([num2str(ii) ', ' num2str(jj) ': ' num2str(sum(~isnan(obs(:,jj,ii)) & obs(:,jj,ii) == 100)/nObsCurr)]);
+%                 end
+                fracCov(jj,ii) = 100*sum(~isnan(obs(:,jj,ii)) & obs(:,jj,ii) == 100)/nObsCurr;
+                
+                if nObsCurr == 0 || (sum(~isnan(obs(:,jj,ii)) & obs(:,jj,ii) == 100)/nObsCurr > fracGlacThresh) %Cell is glaciated 
+                    %Above LHS: Fraction of times when there is obs at cell and IT IS snow/ice covered
+                    %Above RHS: fraction for considering cell to be glacier
                     subGlac(cntr) = sub2ind(szGrid, jj, ii);
                     cntr = cntr + 1;
                     
@@ -290,20 +303,22 @@ for mm = 1 : nFit
             end
         end
         subGlac(cntr:end) = [];
+        nLocCom = numel(subGlac);
+        %hist(fracCov(:),20)
 
         %Parajka, J., & Blöschl, G. (2008). The value of MODIS snow cover data 
         %in validating and calibrating conceptual hydrologic models. Journal of 
         %Hydrology, 358(3?4), 240-258. http://doi.org/10.1016/j.jhydrol.2008.06.006
         
-        %Find number of images that are not all nan:
-        mCntr = 0;
-        for kk = 1 : numel(obs(:,1,1))
-            if ~all2d(isnan(squeeze(obs(kk,:,:))))
-               mCntr = mCntr + 1; 
-            end
-        end
-        
-        lPix = numel(obs(1,:,:)) - numel(subGlac);
+%         %Find number of images that are not all nan:
+%         mCntr = 0;
+%         for kk = 1 : numel(obs(:,1,1))
+%             if ~all2d(isnan(squeeze(obs(kk,:,:))))
+%                mCntr = mCntr + 1; 
+%             end
+%         end
+%         
+%         lPix = numel(obs(1,:,:)) - numel(subGlac);
 
         thrshSWE = 10/100; %units = m
         thrshSCA = 10; %units = percent
@@ -315,23 +330,32 @@ for mm = 1 : nFit
         for jj = 1 : numel(obs(1,:,1))
             for ii = 1 : numel(obs(1,1,:))
                 indCurr = sub2ind(szGrid, jj, ii);
-                if ~any(indCurr ==subGlac)
-                    indNNan = find(~isnan(mod(:,jj,ii)) & ~isnan(obs(:,jj,ii)));
+                if ~any(indCurr == subGlac)
+                    indNNan = find(~isnan(mod(:,jj,ii)) & ~isnan(obs(:,jj,ii))); %Only compare grid cells where obs and mod both have values
 
-                    indYObs = find(obs(indNNan,jj,ii) > thrshSCA);
-                    indNObs = find(obs(indNNan,jj,ii) == 0);
-                    indYMod = find(mod(indNNan,jj,ii) > thrshSWE);
-                    indNMod = find(mod(indNNan,jj,ii) == 0);
+                    indYObs = find(obs(indNNan,jj,ii) > thrshSCA); %Observations with snow
+                    indNObs = find(obs(indNNan,jj,ii) == 0); %Observations with no snow
+                    indYMod = find(mod(indNNan,jj,ii) > thrshSWE); %Model with snow
+                    indNMod = find(mod(indNNan,jj,ii) == 0); %Model with no snow
 
-                    EOvr(jj,ii) = numel(intersect(indYMod, indNObs));
-                    EUnd(jj,ii) = numel(intersect(indNMod, indYObs));
+                    EOvr(jj,ii) = numel(intersect(indYMod, indNObs)); %Pixels with modelled snow and no observed snow
+                    EUnd(jj,ii) = numel(intersect(indNMod, indYObs)); %Pixels with no modelled snow and with observed snow
                 end
             end
         end
-        EOvrAvg = sum2d(EOvr)/(mCntr*lPix);
-        EUndAvg = sum2d(EUnd)/(mCntr*lPix);
-
-        statOut(mm) = wghtOvr*EOvrAvg + wghtUnd*EUndAvg;
+%         EOvrAvg = sum2d(EOvr)/(mCntr*lPix);
+%         EUndAvg = sum2d(EUnd)/(mCntr*lPix);
+         
+        EOvrAvg = sum2d(EOvr)/(nLoc - nLocCom); %Fraction of time when model overestimates snow
+        EUndAvg = sum2d(EUnd)/(nLoc - nLocCom); %Fraction of time when model underestimates snow
+        
+        if strcmpi(strEval{mm}, 'ParajkaOver') %Model over represents snow
+            statOut(mm) = wghtOvr*EOvrAvg;
+        elseif strcmpi(strEval{mm},'ParajkaUnder')  %Model under represents snow
+            statOut(mm) = wghtUnd*EUndAvg;
+        else
+            statOut(mm) = wghtOvr*EOvrAvg + wghtUnd*EUndAvg;
+        end
 
     else
         error('Unkown fitness ranking method specified.');
