@@ -88,8 +88,9 @@ for mm = 1 : nFit
     % if ~isequal(size(obs),size(mod))
     %     obs = obs(ones(size(mod,1),1),:);
     % end
-
-    if regexpbl(strEval{mm},'bias') %BIAS:
+    if isempty(strEval{mm})
+        statOut(mm) = nan;
+    elseif regexpbl(strEval{mm},'bias') %BIAS:
         statOut(mm) = nanmean(obs(:) - mod(:));
     elseif regexpbl(strEval{mm},'RMSE') %ROOT MEAN SQUARE ERROR:
         statOut(mm) = sqrt(nanmean((mod(:) - obs(:)).^2));
@@ -358,7 +359,7 @@ for mm = 1 : nFit
         end
 
     else
-        error('Unkown fitness ranking method specified.');
+        error('fitness:unknownMetric',['The fitness evaluation metric ' strEval{mm} ' has not been programmed for.']);
     end
 
     if isempty(statOut(mm) )
