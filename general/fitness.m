@@ -259,15 +259,15 @@ for mm = 1 : nFit
                 rTerm = nan;
             end
             
-            sTerm = (nanstd(mod)/nanstd(obs)-1)^2;
-            bTerm = (nanmean(mod)/nanmean(obs)-1)^2;
+            sTerm = ( nanstd(mod)/ nanstd(obs) - 1)^2;
+            bTerm = (nanmean(mod)/nanmean(obs) - 1)^2;
             
             if strcmpi(strEval{mm},'KGEr') %r correlation term: 
-                statOut(mm) = sqrt(rTerm);
+                statOut(mm) = rTerm;
             elseif strcmpi(strEval{mm},'KGEs') %standard deviation term
-                statOut(mm) = sqrt(sTerm);
+                statOut(mm) = sTerm;
             elseif strcmpi(strEval{mm},'KGEb') %Bias term
-                statOut(mm) = sqrt(bTerm);
+                statOut(mm) = bTerm;
             else
                 statOut(mm) = sqrt(rTerm + sTerm + bTerm);
             end
