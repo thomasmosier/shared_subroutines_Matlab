@@ -1,27 +1,27 @@
-% Copyright 2013, 2014, 2015, 2016 Thomas M. Mosier, Kendra V. Sharp, and 
+% Copyright 2013, 2014, 2015, 2016 Thomas M. Mosier, Kendra V. Sharp, and
 % David F. Hill
-% This file is part of multiple packages, including the GlobalClimateData 
-% Downscaling Package, the Hydropower Potential Assessment Tool, and the 
+% This file is part of multiple packages, including the GlobalClimateData
+% Downscaling Package, the Hydropower Potential Assessment Tool, and the
 % Conceptual Cryosphere Hydrology Framework.
-% 
-% The above named packages are free software: you can 
-% redistribute it and/or modify it under the terms of the GNU General 
-% Public License as published by the Free Software Foundation, either 
+%
+% The above named packages are free software: you can
+% redistribute it and/or modify it under the terms of the GNU General
+% Public License as published by the Free Software Foundation, either
 % version 3 of the License, or (at your option) any later version.
-% 
-% The above named packages are distributed in the hope that it will be 
+%
+% The above named packages are distributed in the hope that it will be
 % useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 % MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
 % Public License for more details.
-% 
+%
 % You should have received a copy of the GNU General Public License
-% along with the Downscaling Package.  If not, see 
+% along with the Downscaling Package.  If not, see
 % <http://www.gnu.org/licenses/>.
 
 function statOut = fitness(obs, mod, strEval, varargin)
 
 
-%Score for fitness metric evaluation that returns 0. 
+%Score for fitness metric evaluation that returns 0.
 nanPen = 10^3;
 
 % if isempty(obs) || isempty(mod)
@@ -30,7 +30,7 @@ nanPen = 10^3;
 %     else
 %         statsOut = nan;
 %     end
-% 
+%
 %     return
 % end
 
@@ -41,12 +41,12 @@ if numel(size(mod)) == 2
     %Ensure observed and modelled vectors have same orientation (probably
     %doesn't matter):
     if numel(obs(1,:)) == 1 && numel(obs(:,1)) ~= 1
-       obs = obs'; 
+       obs = obs';
     end
     if numel(mod(1,:)) == 1 && numel(mod(:,1)) ~= 1
-       mod = mod'; 
+       mod = mod';
     end
-    
+
 %     %Remove values based on nan's in observed vector:
 %     mod(isnan(obs)) = [];
 %     obs(isnan(obs)) = [];
@@ -59,27 +59,27 @@ if numel(size(mod)) == 2
 end
 
 if ischar(strEval)
-   strEval = {strEval}; 
+   strEval = {strEval};
 end
 
 nFit = numel(strEval(:));
 statOut = nan(nFit, 1);
 for mm = 1 : nFit
-    
+
 %     %Can have two evaluation methods, one = MODIS (only for 3D arrays) and
 %     %second for all other cases:
 %     if regexpbl(strEval{mm},'Parajka')
-%         if numel(size(mod)) == 3 
+%         if numel(size(mod)) == 3
 %             strEval{mm} = 'Parajka';
 %         elseif numel(size(mod)) == 2
 %             indMOD = regexpi(strEval{mm},'Parajka');
-%             strEval{mm}(indMOD:indMOD+4) = []; 
+%             strEval{mm}(indMOD:indMOD+4) = [];
 %         end
 %     end
 
     if ~isequal(size(obs),size(mod))
        warning('fitness:unequalSize',['The model output and observations '...
-           'to be compared have different sizes and are therefore not being compared.']); 
+           'to be compared have different sizes and are therefore not being compared.']);
        statOut(mm) = nan;
        return
     end
@@ -131,13 +131,13 @@ for mm = 1 : nFit
         %performance of gridded glacier mass balance modelling over a region
         %The 'rTerm' assesses error in the spatial pattern (first using a smoothing filter)
         %The 'bTerm' assesses error in the regional bias
-        
+
         %Apply Gaussian filter for calculating correlation
         rad = 2;
         sigma = rad;
         obsGauss = Gaussian_filter(obs, rad, sigma);
         obsGauss(isnan(obs)) = nan;
-        
+
         modGauss = Gaussian_filter(mod, rad, sigma);
         modGauss(isnan(mod)) = nan;
 
@@ -155,15 +155,15 @@ for mm = 1 : nFit
 %             R = (corrcoef(obs,mod) - 1)^2;
 %             [~, valMod] = e_cdf(mod, 'bins', 100);
 %             [~, valObs] = e_cdf(obs, 'bins', 100);
-%             
+%
 %             sTerm = (nanmean(abs((valMod(2:end)-valObs(2:end)))./nanmean(valObs(2:end))))^2;
-%             
+%
 %             sTerm = (nanmean(abs((valMod(2:end)-valObs(2:end))./valObs(2:end))))^2;
 % %             sTerm = (nanstd(mod)/nanstd(obs)-1)^2;
         else
             rTerm = nan;
         end
-        
+
         bTerm = ((nanmean(mod(:))-nanmean(obs(:)))/nanstd(obs(:)))^2;
         %See definition of the KGE and linear correlation coefficient (can be decomposed into covariance and SD)
         statOut(mm) = sqrt(rTerm + bTerm);
@@ -182,7 +182,7 @@ for mm = 1 : nFit
                             ./ denomNse;
                         if denomNse == 0
                             nFitG(jj,ii) = nan;
-                        end 
+                        end
                     else
                         nFitG(jj,ii) = nan;
                     end
@@ -197,15 +197,15 @@ for mm = 1 : nFit
             indRem = union(indRem, find(isnan(mod)));
             obs(indRem) = [];
             mod(indRem) = [];
-            
+
             denomNse = nansum( (obs - nanmean(obs,2)*ones(1, numel(obs(1,:)))).^2, 2);
             statOut(mm) = nansum((obs - mod).^2, 2) ...
                 ./ denomNse;
             if denomNse == 0
                 statOut(mm) = nan;
-            end 
+            end
         end
-    elseif regexpbl(strEval{mm},'KGE') || regexpbl(strEval{mm},{'kling','gupta'},'and')        
+    elseif regexpbl(strEval{mm},'KGE') || regexpbl(strEval{mm},{'kling','gupta'},'and')
             %See definition of the KGE and linear correlation coefficient (can be decomposed into covariance and SD)
             %     nFit(mm) = sqrt((corrcoef(2)-1)^2 + (nanstd(mod)/nanstd(obs)-1)^2 + (nanmean(mod)/nanmean(obs)-1)^2);
         if numel(size(mod)) == 3
@@ -221,14 +221,14 @@ for mm = 1 : nFit
                         covVar = cov(squeeze(obs(indUse,jj,ii)), squeeze(mod(indUse,jj,ii)));
                         if numel(covVar) > 1
                             rTerm = (covVar(2)/(nanstd(squeeze(obs(indUse,jj,ii)))*nanstd(squeeze(mod(indUse,jj,ii))))-1)^2;
-                        else 
+                        else
                             rTerm = nan;
                         end
-                        
+
                         sTerm = (nanstd(squeeze(mod(indUse,jj,ii)))/nanstd(squeeze(obs(indUse,jj,ii)))-1)^2;
                         bTerm = (nanmean(squeeze(mod(indUse,jj,ii)))/nanmean(squeeze(obs(indUse,jj,ii)))-1)^2;
-                        
-                        if regexpbl(strEval{mm},'KGEr') %r correlation term: 
+
+                        if regexpbl(strEval{mm},'KGEr') %r correlation term:
                             nFitG(jj,ii) = sqrt(rTerm);
                         elseif regexpbl(strEval{mm},'KGEs') %standard deviation term
                             nFitG(jj,ii) = sqrt(sTerm);
@@ -251,18 +251,18 @@ for mm = 1 : nFit
             indRem = union(indRem, find(isnan(mod)));
             obs(indRem) = [];
             mod(indRem) = [];
-        
+
             covVar = cov(obs,mod);
             if numel(covVar) > 1
                 rTerm = (covVar(2)/(nanstd(obs)*nanstd(mod))-1)^2;
             else
                 rTerm = nan;
             end
-            
+
             sTerm = ( nanstd(mod)/ nanstd(obs) - 1)^2;
             bTerm = (nanmean(mod)/nanmean(obs) - 1)^2;
-            
-            if strcmpi(strEval{mm},'KGEr') %r correlation term: 
+
+            if strcmpi(strEval{mm},'KGEr') %r correlation term:
                 statOut(mm) = rTerm;
             elseif strcmpi(strEval{mm},'KGEs') %standard deviation term
                 statOut(mm) = sTerm;
@@ -273,14 +273,14 @@ for mm = 1 : nFit
             end
         end
     elseif regexpbl(strEval{mm},{'Parajka','MODIS'})
-        %Parajka, J., & Blöschl, G. (2008). The value of MODIS snow cover data 
-        %in validating and calibrating conceptual hydrologic models. Journal of 
+        %Parajka, J., & Blï¿½schl, G. (2008). The value of MODIS snow cover data
+        %in validating and calibrating conceptual hydrologic models. Journal of
         %Hydrology, 358(3?4), 240-258. http://doi.org/10.1016/j.jhydrol.2008.06.006
-        
-        
+
+
         %Thresholds and weights used:
         thrshGlac = 0.98; %Threshold for considering cell glaciated and removing (fraction of time steps where it is snow/ice covered)
-        %These values are selected by Parajka and Blöschl in their paper
+        %These values are selected by Parajka and Blï¿½schl in their paper
         %(pg. 248)
         thrshSWE =  0; %Threshold for considering grid cell glacier covered (units = m)
         thrshSCA = 25; %Threshold for consdering observation image snow covered (units = percent)
@@ -293,7 +293,7 @@ for mm = 1 : nFit
         %Set observations to nan at locations where model is nan (e.g.
         %outside of geographic bounds)
         obs(isnan(mod)) = nan;
-        
+
         %Find number of pixels that are glaciated or have permanent snow cover
         %(i.e. always 100 or nan in MODIS observations)
         szGrid = size(squeeze(obs(1,:,:)));
@@ -306,22 +306,22 @@ for mm = 1 : nFit
             for ii = 1 : numel(obs(1,1,:))
                 %Vector of current observations:
                 vecObsCurr = obs(:,jj,ii);
-                
-                %Number of time steps when observation pixel has value (is not nan) 
+
+                %Number of time steps when observation pixel has value (is not nan)
                 matObsN(jj,ii) = sum(~isnan(vecObsCurr));
-                
+
 %                 if matObsN(jj,ii) ~= 0
 %                     disp([num2str(ii) ', ' num2str(jj) ': ' num2str(matObsN(jj,ii))]);
 %                 end
-                
+
                 %Fraction of times when there is obs at cell and IT IS snow/ice covered
                 matCovFrac(jj,ii) = sum(~isnan(vecObsCurr) & vecObsCurr == 100) / matObsN(jj,ii);
-                
-                if matObsN(jj,ii) == 0 || (matCovFrac(jj,ii) > thrshGlac) %Cell is glaciated 
+
+                if matObsN(jj,ii) == 0 || (matCovFrac(jj,ii) > thrshGlac) %Cell is glaciated
                     %Vector of glacier covered grid cells
                     subGlac(cntr) = sub2ind(szGrid, jj, ii);
                     cntr = cntr + 1;
-                    
+
                     mod(:,jj,ii) = nan;
                     obs(:,jj,ii) = nan;
                 end
@@ -335,41 +335,21 @@ for mm = 1 : nFit
         matObsNUse = matObsN; %This matrix is number of observations at all grid cells
         matObsNUse(subGlac) = 0; %Set observations to 0 at glaciated grid cells
         nObsUse = sum(matObsNUse(:)); %Sum over all grid cells
-        
-<<<<<<< HEAD
-%         %Find number of images that are not all nan:
-%         mCntr = 0;
-%         for kk = 1 : numel(obs(:,1,1))
-%             if ~all2d(isnan(squeeze(obs(kk,:,:))))
-%                mCntr = mCntr + 1; 
-%             end
-%         end
-%         
-%         lPix = numel(obs(1,:,:)) - numel(subGlac);
-        
-        thrshSWE = 10/100; %units = m
-        thrshSCA = 10; %units = percent
-        wghtOvr = 5; %Weighting factor for over representation
-        wghtUnd = 5; %Weighting factor for under representation
-        
-        EOvr = nan(size(squeeze(obs(1,:,:))));
-        EUnd = nan(size(squeeze(obs(1,:,:))));
-=======
+
 
         %Loop over all spatial grid cells to identify incorrect
         %observations
         EOvr = nan(szGrid, 'single');
         EUnd = nan(szGrid, 'single');
->>>>>>> c285b122af7f0082d8159cdea100b1f3ba8e4dcb
         for jj = 1 : numel(obs(1,:,1))
             for ii = 1 : numel(obs(1,1,:))
                 %Calculate current indice
                 indCurr = sub2ind(szGrid, jj, ii);
-                
+
                 %Compare observations and model at non-glaciated grid cells
-                if ~any(indCurr == subGlac) 
+                if ~any(indCurr == subGlac)
                     %Find indices where model and observations have values
-                    indNNan = find(~isnan(mod(:,jj,ii)) & ~isnan(obs(:,jj,ii))); 
+                    indNNan = find(~isnan(mod(:,jj,ii)) & ~isnan(obs(:,jj,ii)));
 
                     indYObs = find(obs(indNNan,jj,ii) > thrshSCA); %Observations with snow
                     indNObs = find(obs(indNNan,jj,ii) == 0); %Observations with no snow
@@ -382,12 +362,12 @@ for mm = 1 : nFit
             end
         end
         
-        
+
         %Calculate under and over errors
         EOvrAvg = sum2d(EOvr)/nObsUse; %Fraction of time when model overestimates snow
         EUndAvg = sum2d(EUnd)/nObsUse; %Fraction of time when model underestimates snow
-        
-        
+
+
         %Write output stat
         if strcmpi(strEval{mm}, 'ParajkaOver') %Model over represents snow
             statOut(mm) = wghtOvr*EOvrAvg;
@@ -401,7 +381,7 @@ for mm = 1 : nFit
     end
 
     if isempty(statOut(mm))
-       statOut(mm) = nan; 
+       statOut(mm) = nan;
     end
 
     if isnan(statOut(mm))
