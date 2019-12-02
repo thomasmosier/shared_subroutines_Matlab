@@ -229,11 +229,11 @@ for mm = 1 : nFit
                         bTerm = (nanmean(squeeze(mod(indUse,jj,ii)))/nanmean(squeeze(obs(indUse,jj,ii)))-1)^2;
 
                         if regexpbl(strEval{mm},'KGEr') %r correlation term:
-                            nFitG(jj,ii) = sqrt(rTerm);
+                            nFitG(jj,ii) = rTerm;
                         elseif regexpbl(strEval{mm},'KGEs') %standard deviation term
-                            nFitG(jj,ii) = sqrt(sTerm);
+                            nFitG(jj,ii) = sTerm;
                         elseif regexpbl(strEval{mm},'KGEb') %Bias term
-                            nFitG(jj,ii) = sqrt(bTerm);
+                            nFitG(jj,ii) = bTerm;
                         else
                             nFitG(jj,ii) = sqrt(rTerm + sTerm + bTerm);
                         end
