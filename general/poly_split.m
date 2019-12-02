@@ -38,10 +38,20 @@ end
 
 %Find splits delineated by matching vertices:
 for kk = numel(xCell(:)) : -1 : 1
-    crdCurr = [xCell{kk}(:), yCell{kk}(:)];
+    %Remove consecutive duplicates:
+%     crdConsSame = [diff(crdCurr(:,1)), diff(crdCurr(:,2))];
+    indConsSame = find(diff(xCell{kk}(:)) == 0 & diff(yCell{kk}(:)) == 0);
+    if ~isempty(indConsSame)
+        xCell{kk}(indConsSame) = [];
+        yCell{kk}(indConsSame) = [];
+    end
     
+    %Set current ordered pair for checking
+    crdCurr = [xCell{kk}(:), yCell{kk}(:)];
+
+    %Find unique rows
     [~,I,~] = unique(crdCurr, 'rows');
-    % sort(I)
+    %Check for repeated elements:
     ixDup = setdiff(1:numel(crdCurr(:,1)), I);
     crdDup = crdCurr(ixDup,:);
 
@@ -52,16 +62,16 @@ for kk = numel(xCell(:)) : -1 : 1
             indDup = ismember(crdCurr, crdDup(ii,:), 'rows');
             indDup = find(indDup == 1);
             
-            if numel(indDup) ~= 2
-                error('polySplit:incorrectDuplicateRows', ['The current vertice is duplicated ' ...
-                    num2str(numel(indDup)) ' times. It should have two occurences.']);
-            end
-            
-            if ~isequal(indDup(:), [1; numel(crdCurr(:,1))]) %If duplicates are not first and last, split
-                if indDup(1) == 1
-                    iSplit = [iSplit, indDup(2)+1];
-                else
-                    iSplit = [iSplit, indDup(1)];
+         	%If duplicates are not first and last indices, split shape into
+         	%two shapes
+            indLast = numel(crdCurr(:,1));
+            if ~isequal(indDup(:), [1; indLast])
+                for zz = 1 : numel(indDup(:))
+                    if indDup(zz) == 1 || indDup(zz) == indLast %If duplicate is first indice, then split at following vertex
+                        continue
+                    else
+                        iSplit = [iSplit, indDup(zz)];
+                    end
                 end
             end
         end
