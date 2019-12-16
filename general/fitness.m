@@ -296,6 +296,18 @@ for mm = 1 : nFit
 
         %Find number of pixels that are glaciated or have permanent snow cover
         %(i.e. always 100 or nan in MODIS observations)
+        %If obs are only 2D, force a degenerate 3rd dim so the rest of the
+        %indexing works; this is safe to do for both obs and mod
+        %because their dims are checked earlier and forced to be the same
+        if numel(size(obs)) == 2
+            szGrid = size(obs);
+            obs = reshape(obs, 1, szGrid(1), szGrid(2));
+            mod = reshape(mod, 1, szGrid(1), szGrid(2));
+            orig2dim = true;
+    
+        else
+            orig2dim = false;
+        end
         szGrid = size(squeeze(obs(1,:,:)));
         subGlac = zeros(prod(szGrid),1, 'single');
 
@@ -376,6 +388,13 @@ for mm = 1 : nFit
         else
             statOut(mm) = wghtOvr*EOvrAvg + wghtUnd*EUndAvg;
         end
+        
+        % If original obs/mod were 2D, remove the degenerate dimension
+        if orig2dim
+            obs = squeeze(obs);
+            mod = squeeze(mod);
+        end
+        
     else
         error('fitness:unknownMetric',['The fitness evaluation metric ' strEval{mm} ' has not been programmed for.']);
     end
