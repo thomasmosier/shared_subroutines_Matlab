@@ -303,10 +303,6 @@ for mm = 1 : nFit
             szGrid = size(obs);
             obs = reshape(obs, 1, szGrid(1), szGrid(2));
             mod = reshape(mod, 1, szGrid(1), szGrid(2));
-            orig2dim = true;
-    
-        else
-            orig2dim = false;
         end
         szGrid = size(squeeze(obs(1,:,:)));
         subGlac = zeros(prod(szGrid),1, 'single');
@@ -387,12 +383,6 @@ for mm = 1 : nFit
             statOut(mm) = wghtUnd*EUndAvg;
         else
             statOut(mm) = wghtOvr*EOvrAvg + wghtUnd*EUndAvg;
-        end
-        
-        % If original obs/mod were 2D, remove the degenerate dimension
-        if orig2dim
-            obs = squeeze(obs);
-            mod = squeeze(mod);
         end
         
     else
