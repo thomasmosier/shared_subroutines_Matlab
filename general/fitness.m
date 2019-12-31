@@ -289,11 +289,29 @@ for mm = 1 : nFit
         wghtOvr = 5; %Weighting factor for over representation
         wghtUnd = 5; %Weighting factor for under representation
 
-
+        
         %Set observations to nan at locations where model is nan (e.g.
         %outside of geographic bounds)
         obs(isnan(mod)) = nan;
+        
+        
+        %For testing:
+%         %Only evaluate this line first iteration of test:
+%         obsTest = obs;
+%         modTest = mod;
+%         %Evaluate every time:
+%         obs = obsTest;
+%         mod = modTest;
+%         %(Test 1) sensitivity to change in obs to 0:
+%         obs(~isnan(obs)) = 0;
+%         %(Test 2) sensitivity to change in obs to 100:
+%         obs(~isnan(obs)) = 100;
+%         %(Test 3) sensitivity to change in mod to 0:
+%         mod(~isnan(mod)) = 0;
+%         %(Test 4) sensitivity to change in mod to 100:
+%         mod(~isnan(mod)) = 100;
 
+        
         %Find number of pixels that are glaciated or have permanent snow cover
         %(i.e. always 100 or nan in MODIS observations)
         %If obs are only 2D, force a degenerate 3rd dim so the rest of the
