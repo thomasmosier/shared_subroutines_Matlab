@@ -37,6 +37,7 @@ nanPen = 10^3;
 obs = squeeze(obs);
 mod = squeeze(mod);
 
+
 if numel(size(mod)) == 2
     %Ensure observed and modelled vectors have same orientation (probably
     %doesn't matter):
@@ -58,9 +59,30 @@ if numel(size(mod)) == 2
     end
 end
 
+
+%Check input data:
+if all(isnan(mod))
+    warning('fitness:modAllNan', ['Comparison using ' strEval ...
+        ' is being skipped because all model output is nan.']);
+    statOut = nan;
+    return
+elseif all(isnan(obs))
+    warning('fitness:obsAllNan', ['Comparison using ' strEval ...
+        ' is being skipped because all observed data is nan.']);
+    statOut = nan;
+    return
+elseif ~isequal(size(obs),size(mod))
+    warning('fitness:obsModDiffSize', ['Comparison using ' strEval ...
+        ' is being skipped because observation data and model output are different sizes.']);
+    statOut = nan;
+    return
+end
+
+
 if ischar(strEval)
    strEval = {strEval};
 end
+
 
 nFit = numel(strEval(:));
 statOut = nan(nFit, 1);
