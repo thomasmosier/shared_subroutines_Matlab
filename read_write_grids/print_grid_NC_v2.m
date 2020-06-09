@@ -20,7 +20,6 @@
 
 function print_grid_NC_v2(pathData, data, var, lon, lat, dateVec, dateBnds, varargin)
 
-
 %Creates NetCDF geo-referenced climate data file using data and metadata
 %provided by inputs.
 
@@ -39,6 +38,9 @@ function print_grid_NC_v2(pathData, data, var, lon, lat, dateVec, dateBnds, vara
         %(1) a string specifying units of data variable.
         %(2) a number corresponding to decimal places to use in coding data.
 
+        
+%disp(['printing: ' var ' for ' num2str(dateVec(1)) '/' num2str(dateVec(2))]);
+        
 prec = nan;
 units = nan;
 if iscell(varargin) && ~isempty(varargin)
