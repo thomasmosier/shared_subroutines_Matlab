@@ -98,8 +98,16 @@ if ~any(isnan(dateRef))
             continue
         end
 
-        %Find year no counting leap:
-        nYrs = floor(daysIn(ii)/daysYr);
+        
+        %This is a workaround for error in leap day encoding:
+        if ii == 28 && numel(daysIn) == 29 && all(diff(daysIn(1:27)) == 1) && diff(daysIn(28:29)) > 10000
+            %nYrs = nYrs (same as last value)
+            daysIn(29) = daysIn(28) + 1;
+            nYrs = floor(daysIn(ii)/daysYr);
+        else
+            %Find year no counting leap:
+            nYrs = floor(daysIn(ii)/daysYr);
+        end
         
         %Find leaps
         switch blCal 
